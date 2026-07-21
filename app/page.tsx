@@ -236,7 +236,7 @@ export default function PhotoGalleryHomePage() {
                   💡 关于我
                 </h3>
                 <div className="bg-slate-50 p-4 rounded-2xl text-slate-600 text-sm leading-relaxed border border-slate-100">
-                  👋 嗨！我是 Huioboro。这里是我的个人空间预览区域。
+                  👋 嗨！我是朧。这里是我的个人空间预览区域。
                 </div>
               </div>
 
