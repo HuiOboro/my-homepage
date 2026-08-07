@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getAllSlugs, getPostBySlug } from '@/lib/posts';
+import BlogComments from '@/app/blog/BlogComments';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -47,6 +48,8 @@ export default async function BlogPostPage({ params }: PageProps) {
           className="prose-blog"
           dangerouslySetInnerHTML={{ __html: post.contentHtml }}
         />
+
+        <BlogComments postSlug={post.slug} />
       </article>
     </main>
   );

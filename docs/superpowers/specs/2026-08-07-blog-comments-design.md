@@ -41,6 +41,21 @@ create policy "blog_comments_delete" on public.blog_comments for delete using (t
 -- 手动建表后必须给访客(anon)开权限，否则匿名访问会报 permission denied
 grant select, insert, delete, update on public.blog_comments to anon;
 grant usage on sequence public.blog_comments_id_seq to anon;
+
+-- 点赞函数（security definer，绕开缺少的 UPDATE RLS 策略，仅允许 +1）
+create or replace function increment_comment_like(comment_id bigint)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.blog_comments
+  set likes = likes + 1
+  where id = comment_id;
+$$;
+
+revoke all on function increment_comment_like(comment_id bigint) from public;
+grant execute on function increment_comment_like(comment_id bigint) to anon;
 ```
 
 ## 用户在 Supabase 控制台建表步骤
@@ -61,7 +76,7 @@ grant usage on sequence public.blog_comments_id_seq to anon;
 - **展示**：前端把平铺数据构造成两层树——顶层评论列表 + 每条顶层评论下的回复列表（缩进渲染）。回复只挂一层（parent_id 指向顶层评论；若某条回复的 parent_id 指向一条回复，则归并到该回复所属的顶层评论下，保证两层结构）
 - **发表**：顶部表单，昵称 + 内容 → insert（顶层）
 - **回复**：顶层评论下点【回复】，在回复框输入 → insert（parent_id = 该顶层评论 id）
-- **点赞**：点【👍 赞】→ 更新该评论 `likes + 1`（update），并用 localStorage（key 如 `blog_liked_<postSlug>`）记录已赞评论 id，防止重复
+- **点赞**：点【👍 赞】→ 调用安全定义者（security definer）RPC 函数 `increment_comment_like(comment_id)` 使该评论 `likes + 1`，并用 localStorage（key 如 `blog_liked_<postSlug>`）记录已赞评论 id，防止重复。原因：`blog_comments` 表没有 UPDATE RLS 策略，anon 直接 `update` 会静默失败（REST 返回 0 行），因此通过数据库函数执行更新
 - **删除**：点"管理员"→ prompt 输入密码（与留言板相同 `ADMIN_PASSWORD = '123'`）→ 验证后每条评论/回复旁显示"删除"按钮，点击 delete 该评论（其回复因 `on delete cascade` 自动删除）
 
 **UI 结构**（沿用 slate/teal 风格）：

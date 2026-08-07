@@ -1,26 +1,3 @@
-# 博客评论功能 Implementation Plan
-
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
-**Goal:** 为博客文章详情页添加评论功能：发表评论、楼中楼回复、点赞（localStorage 防刷）、管理员密码删除。数据存 Supabase `blog_comments` 表（已由用户建好并配置权限）。
-
-**Architecture:** 新建客户端组件 `app/blog/BlogComments.tsx`（'use client'），接收 `postSlug` prop，通过 Supabase anon client 读写 `blog_comments` 表。前端将平铺评论数据构造成两层树（顶层评论 + 归并到其下的回复）渲染楼中楼。详情页 `app/blog/[slug]/page.tsx`（服务端组件）在正文下方嵌入该组件。
-
-**Tech Stack:** Next.js 16（App Router）、TypeScript、Tailwind CSS v4、`@supabase/supabase-js`（已有）。
-
-参考设计文档：`docs/superpowers/specs/2026-08-07-blog-comments-design.md`。
-数据表 `blog_comments` 已建好：字段 id / post_slug / parent_id / name / content / time / likes / created_at，已配置 RLS 策略与 anon 权限，可用 `SELECT` 验证（返回 200 空数组）。
-
----
-
-### Task 1: 创建评论组件 `app/blog/BlogComments.tsx`
-
-**Files:**
-- Create: `app/blog/BlogComments.tsx`
-
-- [ ] **Step 1: 写入完整组件代码**
-
-```tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -136,7 +113,6 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
       alert('已经赞过啦');
       return;
     }
-    // 点赞通过 security definer 函数执行（表无 UPDATE RLS 策略，直接 update 会静默失败）
     const { error } = await supabase.rpc('increment_comment_like', {
       comment_id: item.id,
     });
@@ -148,6 +124,8 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
       const nextLiked = [...likedIds, item.id];
       setLikedIds(nextLiked);
       localStorage.setItem(likedKey, JSON.stringify(nextLiked));
+    } else {
+      alert(`点赞失败：${error.message}`);
     }
   };
 
@@ -341,100 +319,3 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
     </section>
   );
 }
-```
-
-- [ ] **Step 2: 类型检查**
-
-```bash
-cd "C:\Users\su289\python\my-accounting-app"
-npx tsc --noEmit
-```
-
-Expected: 无输出（类型检查通过）。
-
----
-
-### Task 2: 详情页接入评论组件
-
-**Files:**
-- Modify: `app/blog/[slug]/page.tsx`
-
-- [ ] **Step 1: 引入并渲染组件**
-
-在 `app/blog/[slug]/page.tsx` 顶部 import 行后追加 import：
-
-```tsx
-import BlogComments from '@/app/blog/BlogComments';
-```
-
-在正文 `<div className="prose-blog" dangerouslySetInnerHTML={{ __html: post.contentHtml }} />` 之后、`</article>` 之前追加：
-
-```tsx
-        <BlogComments postSlug={post.slug} />
-```
-
-即 `article` 内结构变为：返回链接 → 标题区 → 正文 div → 评论组件 → `</article>`。
-
-- [ ] **Step 2: 类型检查**
-
-```bash
-npx tsc --noEmit
-```
-
-Expected: 无输出。
-
----
-
-### Task 3: 构建验证
-
-**Files:**
-- 无（验证步骤）
-
-- [ ] **Step 1: 运行生产构建**
-
-```bash
-cd "C:\Users\su289\python\my-accounting-app"
-npm run build
-```
-
-Expected: 构建成功，`/blog` 与 `/blog/[slug]` 路由正常预渲染。若失败，根据报错定位到 Task 1/2 的对应文件修复。
-
----
-
-### Task 4: 本地预览验证
-
-**Files:**
-- 无（验证步骤）
-
-- [ ] **Step 1: 启动本地 dev 服务器（后台运行）**
-
-```bash
-cd "C:\Users\su289\python\my-accounting-app"
-npm run dev
-```
-
-Expected: 终端显示 `Ready in ...`，本地地址 `http://localhost:3000`。
-
-- [ ] **Step 2: 逐项验证（浏览器操作）**
-
-打开 `http://localhost:3000/blog/my-first-ai-website` 并逐项确认：
-
-1. 文章正文下方出现「💬 评论」区块，显示"还没有评论，来抢沙发吧~"
-2. 发表一条评论（昵称留空）→ 出现在列表，昵称显示"匿名"，时间显示正常
-3. 点该评论的【回复】，输入内容发送 → 楼中楼缩进显示在该评论下方
-4. 点【👍 赞】→ 计数 +1，再点 → 提示"已经赞过啦"
-5. 点【🔒 管理员】输密码 `123` → 评论和回复旁出现【删除】，点删除 → 该评论连同回复一起消失
-6. 刷新页面 → 评论仍在（数据落库）
-7. 打开 `/blog/not-exist`（404 页，无评论区，不报错）与首页 `/`（留言板功能正常）确认无回归
-
-验证完毕后停止 dev 进程。
-
-- [ ] **Step 3: 提交所有改动**
-
-```bash
-cd "C:\Users\su289\python\my-accounting-app"
-git add app/blog/BlogComments.tsx app/blog/[slug]/page.tsx
-git commit -m "feat: 博客详情页新增评论功能（发表/楼中楼回复/点赞/密码删除）"
-```
-
-注意：**只**添加上述两个文件，不要 `git add -A`。
