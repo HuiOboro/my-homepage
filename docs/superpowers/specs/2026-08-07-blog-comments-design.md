@@ -37,6 +37,10 @@ alter table public.blog_comments enable row level security;
 create policy "blog_comments_read" on public.blog_comments for select using (true);
 create policy "blog_comments_insert" on public.blog_comments for insert with check (true);
 create policy "blog_comments_delete" on public.blog_comments for delete using (true);
+
+-- 手动建表后必须给访客(anon)开权限，否则匿名访问会报 permission denied
+grant select, insert, delete, update on public.blog_comments to anon;
+grant usage on sequence public.blog_comments_id_seq to anon;
 ```
 
 ## 用户在 Supabase 控制台建表步骤
