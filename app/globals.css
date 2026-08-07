@@ -24,3 +24,62 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== 博客正文排版 ===== */
+.prose-blog h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.prose-blog p {
+  font-size: 1rem;
+  line-height: 1.9;
+  color: #334155;
+  margin-bottom: 1.25rem;
+}
+.prose-blog ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.prose-blog li {
+  margin-bottom: 0.4rem;
+  line-height: 1.8;
+  color: #334155;
+}
+.prose-blog strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+.prose-blog pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+}
+.prose-blog code {
+  background: #f1f5f9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.375rem;
+  font-size: 0.85em;
+}
+.prose-blog pre code {
+  background: transparent;
+  padding: 0;
+}
+.prose-blog blockquote {
+  border-left: 3px solid #14b8a6;
+  padding-left: 1rem;
+  color: #64748b;
+  font-style: italic;
+  margin-bottom: 1.25rem;
+}
+.prose-blog a {
+  color: #0d9488;
+  text-decoration: underline;
+}
