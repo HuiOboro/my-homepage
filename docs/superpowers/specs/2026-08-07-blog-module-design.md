@@ -73,7 +73,9 @@ excerpt: 一句话简介，显示在列表页
 
 ## 第一篇博文
 
-《不会写代码的大二学生，用 AI 做出了自己的网站》，frontmatter：date=2026-08-07，excerpt 取自正文第一句，slug 使用英文或拼音（如 `my-first-ai-website`）。
+《从"想记账"到"做出网站"：会点 Python 的我，靠 AI 做到了》，frontmatter：date=2026-08-07，excerpt 取自正文第一句，slug 使用英文或拼音（如 `my-first-ai-website`）。
+
+正文开头需体现"会一点 Python 基础，但写网站（前端/后端）完全不会"，与标题保持一致，避免自相矛盾。
 
 ## 范围外（不做）
 
