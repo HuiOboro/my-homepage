@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-// 留言数据类型
+// 留言数据接口定义
 interface Comment {
   id: string | number;
   name: string;
@@ -54,11 +54,11 @@ export default function HomePage() {
     {
       title: "个人博客",
       subtitle: "技术笔记与学习思考随笔",
-      gradient: "from-purple-400 via-pink-500 to-purple-600",
+      gradient: "from-green-200 via-green-300 to-green-400",
       icon: "📖",
-      link: "#",
-      active: false,
-      tag: "筹备中",
+      link: "/blog",
+      active: true,
+      tag: "应用",
     },
   ];
 
@@ -90,38 +90,36 @@ export default function HomePage() {
   }, []);
 
   // 发表留言到 Supabase 云端
-  // 发表留言到 Supabase 云端（带详细报错提示）
-const handleAddComment = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!contentInput.trim()) return;
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contentInput.trim()) return;
 
-  const newComment = {
-    name: nameInput.trim() || '热心网友',
-    content: contentInput.trim(),
-    time: new Date().toLocaleString('zh-CN', {
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const newComment = {
+      name: nameInput.trim() || '热心网友',
+      content: contentInput.trim(),
+      time: new Date().toLocaleString('zh-CN', {
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    };
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert([newComment])
+      .select();
+
+    if (error) {
+      console.error('Supabase 报错详情：', error);
+      alert(`留言发送失败！原因：${error.message} (错误代码: ${error.code})`);
+    } else if (data) {
+      setComments([data[0], ...comments]);
+      setContentInput('');
+    }
   };
 
-  // 向 Supabase 插入数据
-  const { data, error } = await supabase
-    .from('comments')
-    .insert([newComment])
-    .select();
-
-  if (error) {
-    // 打印并弹出具体的报错信息，方便精准排查
-    console.error('Supabase 报错详情：', error);
-    alert(`留言发送失败！原因：${error.message} (错误代码: ${error.code})`);
-  } else if (data) {
-    setComments([data[0], ...comments]);
-    setContentInput('');
-  }
-};
-  // 删除留言（管理员权限）
+  // 删除留言
   const handleDeleteComment = async (id: string | number) => {
     const { error } = await supabase
       .from('comments')
@@ -160,7 +158,7 @@ const handleAddComment = async (e: React.FormEvent) => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10"></div>
       </div>
 
-      {/* 个人名片 */}
+      {/* 个人名片卡片 */}
       <div className="max-w-4xl mx-auto px-6 relative -mt-10 mb-8 z-20">
         <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 sm:p-7 border border-white/80 shadow-xl shadow-slate-200/50">
           <div className="flex flex-col gap-5">
@@ -283,7 +281,95 @@ const handleAddComment = async (e: React.FormEvent) => {
         </button>
       </div>
 
-      {/* 云端同步留言板 Modal */}
+      {/* ======================================================== */}
+      {/* 1. 详细名片 Modal (原汁原味集成你提供的完整 UI)            */}
+      {/* ======================================================== */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
+          <div className="absolute inset-0" onClick={() => setIsModalOpen(false)}></div>
+
+          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 z-10 overflow-hidden max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200">
+            
+            {/* 顶部 Header */}
+            <div className="relative p-6 bg-gradient-to-br from-slate-50 to-teal-50/30 border-b border-slate-100 flex items-center gap-4">
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white hover:bg-slate-100 shadow-sm flex items-center justify-center text-slate-500 font-bold transition-colors z-10"
+              >
+                ✕
+              </button>
+
+              <div className="w-16 h-16 rounded-full border-2 border-white ring-2 ring-teal-500/30 shadow-md overflow-hidden bg-slate-100 shrink-0">
+                <img src={config.avatarImage} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-extrabold text-slate-900">{config.name}</h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 border border-teal-200/60">
+                    PRO
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">{config.bio}</p>
+              </div>
+            </div>
+
+            {/* 弹窗主体：完美复现你提供的 HTML 结构 */}
+            <div className="p-6 overflow-y-auto space-y-6 text-left">
+              {/* 关于我 */}
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                  💡 关于我
+                </h3>
+                <div className="bg-slate-50 p-4 rounded-2xl text-slate-600 text-sm leading-relaxed border border-slate-100">
+                  👋 嗨！我是朧。这里是我的个人空间预览区域。
+                </div>
+              </div>
+
+              {/* 状态与喜好 */}
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                  🎯 状态与喜好
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-teal-50/50 border border-teal-100 text-xs">
+                    <div className="font-bold text-teal-800 mb-1">🎮 游戏</div>
+                    <div className="text-teal-600">单机 / 休闲 / 开放世界</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs">
+                    <div className="font-bold text-blue-800 mb-1">🎧 音乐</div>
+                    <div className="text-blue-600">流行 / 电子 / 动漫 OST</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 如何联系我 */}
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                  📬 如何联系我
+                </h3>
+                <div className="flex flex-wrap gap-3 text-xs font-mono">
+                  <span className="px-3 py-2 bg-slate-100 rounded-xl text-slate-600 border border-slate-200">
+                    Domain: huioboro.xyz
+                  </span>
+                  <span className="px-3 py-2 bg-slate-100 rounded-xl text-slate-600 border border-slate-200">
+                    GitHub: @huioboro
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 底部提示语 */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 text-center text-xs text-slate-400">
+              💡 提示：以上内容为详细主页框架预览！
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 2. 云端同步留言板 Modal                                    */}
+      {/* ======================================================== */}
       {isCommentModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
           <div className="absolute inset-0" onClick={() => setIsCommentModalOpen(false)}></div>
