@@ -13,7 +13,7 @@ export default function BlogPage() {
       <div className="max-w-4xl mx-auto px-6 pt-12">
         <Link
           href="/"
-          className="text-xs text-slate-500 hover:text-teal-600 transition-colors"
+          className="text-xs text-slate-500 hover:text-lime-600 transition-colors"
         >
           ← 返回首页
         </Link>
@@ -35,7 +35,7 @@ export default function BlogPage() {
                 href={`/blog/${post.slug}`}
                 className="block bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
               >
-                <h2 className="font-bold text-lg text-slate-900 hover:text-teal-600 transition-colors">
+                <h2 className="font-bold text-lg text-slate-900 hover:text-lime-600 transition-colors">
                   {post.title}
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">{post.date}</p>

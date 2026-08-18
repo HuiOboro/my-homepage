@@ -36,7 +36,7 @@ export default function HomePage() {
     {
       title: "随手记账",
       subtitle: "云端实时同步 · 轻量个人账本",
-      gradient: "from-emerald-400 via-teal-500 to-emerald-600",
+      gradient: "from-emerald-400 via-lime-500 to-emerald-600",
       icon: "💰",
       link: "/accounting",
       active: true,
@@ -57,6 +57,15 @@ export default function HomePage() {
       gradient: "from-green-200 via-green-300 to-green-400",
       icon: "📖",
       link: "/blog",
+      active: true,
+      tag: "应用",
+    },
+    {
+      title: "偶像梦幻祭 工具箱",
+      subtitle: "ES 资料合集 · 卡面一览等工具",
+      gradient: "from-lime-400 via-lime-500 to-lime-600",
+      icon: "🎤",
+      link: "/es",
       active: true,
       tag: "应用",
     },
@@ -168,17 +177,17 @@ export default function HomePage() {
                   <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white ring-4 ring-slate-100/80 shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
                     <img src={config.avatarImage} alt="Avatar" className="w-full h-full object-cover" />
                   </div>
-                  <span className="absolute -top-1 -right-1 bg-teal-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
+                  <span className="absolute -top-1 -right-1 bg-lime-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
                     🔍 点击名片
                   </span>
                 </div>
 
                 <div>
                   <div className="flex items-center gap-3">
-                    <h1 onClick={() => setIsModalOpen(true)} className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight hover:text-teal-600 transition-colors cursor-pointer">
+                    <h1 onClick={() => setIsModalOpen(true)} className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight hover:text-lime-600 transition-colors cursor-pointer">
                       {config.name}
                     </h1>
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-600 border border-teal-200/60">
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-lime-50 text-lime-600 border border-lime-200/60">
                       PRO
                     </span>
                   </div>
@@ -188,13 +197,13 @@ export default function HomePage() {
 
               <div className="flex sm:flex-col items-center sm:items-end gap-2.5 w-full sm:w-auto justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
                 <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100/80 px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-inner flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse"></span>
                   huioboro.xyz
                 </span>
 
                 <button
                   onClick={() => setIsCommentModalOpen(true)}
-                  className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold text-xs px-4 py-2 rounded-2xl shadow-lg shadow-teal-500/20 active:scale-95 transition-all flex items-center gap-1.5"
+                  className="bg-gradient-to-r from-lime-500 to-emerald-500 hover:from-lime-600 hover:to-emerald-600 text-white font-bold text-xs px-4 py-2 rounded-2xl shadow-lg shadow-lime-500/20 active:scale-95 transition-all flex items-center gap-1.5"
                 >
                   <span>💬 互动留言板</span>
                   <span suppressHydrationWarning className="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">
@@ -219,7 +228,7 @@ export default function HomePage() {
       {/* 应用展示区 */}
       <div className="max-w-4xl mx-auto px-6 mb-8">
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 mb-5">
-          <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-lime-500"></span>
           我的应用与空间
         </h2>
         
@@ -238,9 +247,9 @@ export default function HomePage() {
                       </span>
                     </div>
                     <div className="p-5">
-                      <h3 className="font-bold text-slate-900 text-lg group-hover:text-teal-600 transition-colors flex items-center justify-between">
+                      <h3 className="font-bold text-slate-900 text-lg group-hover:text-lime-600 transition-colors flex items-center justify-between">
                         {card.title}
-                        <span className="text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-teal-600">→</span>
+                        <span className="text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-lime-600">→</span>
                       </h3>
                       <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">{card.subtitle}</p>
                     </div>
@@ -275,7 +284,7 @@ export default function HomePage() {
         >
           <span className="text-base">💬</span>
           <span>留言板</span>
-          <span suppressHydrationWarning className="bg-teal-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+          <span suppressHydrationWarning className="bg-lime-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
             {comments.length}
           </span>
         </button>
@@ -291,7 +300,7 @@ export default function HomePage() {
           <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 z-10 overflow-hidden max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200">
             
             {/* 顶部 Header */}
-            <div className="relative p-6 bg-gradient-to-br from-slate-50 to-teal-50/30 border-b border-slate-100 flex items-center gap-4">
+            <div className="relative p-6 bg-gradient-to-br from-slate-50 to-lime-50/30 border-b border-slate-100 flex items-center gap-4">
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white hover:bg-slate-100 shadow-sm flex items-center justify-center text-slate-500 font-bold transition-colors z-10"
@@ -299,14 +308,14 @@ export default function HomePage() {
                 ✕
               </button>
 
-              <div className="w-16 h-16 rounded-full border-2 border-white ring-2 ring-teal-500/30 shadow-md overflow-hidden bg-slate-100 shrink-0">
+              <div className="w-16 h-16 rounded-full border-2 border-white ring-2 ring-lime-500/30 shadow-md overflow-hidden bg-slate-100 shrink-0">
                 <img src={config.avatarImage} alt="Avatar" className="w-full h-full object-cover" />
               </div>
 
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-xl font-extrabold text-slate-900">{config.name}</h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 border border-teal-200/60">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-lime-50 text-lime-600 border border-lime-200/60">
                     PRO
                   </span>
                 </div>
@@ -332,9 +341,9 @@ export default function HomePage() {
                   🎯 状态与喜好
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-teal-50/50 border border-teal-100 text-xs">
-                    <div className="font-bold text-teal-800 mb-1">🎮 游戏</div>
-                    <div className="text-teal-600">单机 / 休闲 / 开放世界</div>
+                  <div className="p-3 rounded-xl bg-lime-50/50 border border-lime-100 text-xs">
+                    <div className="font-bold text-lime-800 mb-1">🎮 游戏</div>
+                    <div className="text-lime-600">单机 / 休闲 / 开放世界</div>
                   </div>
                   <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs">
                     <div className="font-bold text-blue-800 mb-1">🎧 音乐</div>
@@ -410,20 +419,20 @@ export default function HomePage() {
                   placeholder="你的昵称（可选，默认：热心网友）" 
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="w-full px-4 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all select-text"
+                  className="w-full px-4 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all select-text"
                 />
                 <textarea 
                   rows={3}
                   placeholder="给 朧 留个言吧..." 
                   value={contentInput}
                   onChange={(e) => setContentInput(e.target.value)}
-                  className="w-full px-4 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all resize-none select-text"
+                  className="w-full px-4 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all resize-none select-text"
                   required
                 />
                 <div className="flex justify-end">
                   <button 
                     type="submit" 
-                    className="bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs px-5 py-2 rounded-xl shadow-md shadow-teal-600/20 active:scale-95 transition-all"
+                    className="bg-lime-600 hover:bg-lime-700 text-white font-medium text-xs px-5 py-2 rounded-xl shadow-md shadow-lime-600/20 active:scale-95 transition-all"
                   >
                     发送云端留言 ✨
                   </button>

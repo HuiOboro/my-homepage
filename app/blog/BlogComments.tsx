@@ -193,8 +193,8 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
           onClick={() => handleLike(item)}
           className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors ${
             likedIds.includes(item.id)
-              ? 'bg-teal-50 text-teal-600 border-teal-200'
-              : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-teal-600 hover:border-teal-200'
+              ? 'bg-lime-50 text-lime-600 border-lime-200'
+              : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-lime-600 hover:border-lime-200'
           }`}
         >
           👍 {item.likes || 0}
@@ -202,7 +202,7 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
         {!isReply && (
           <button
             onClick={() => setReplyTo(item)}
-            className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:text-teal-600 hover:border-teal-200 transition-colors"
+            className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:text-lime-600 hover:border-lime-200 transition-colors"
           >
             回复
           </button>
@@ -223,11 +223,11 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
             placeholder="回复内容..."
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
-            className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 select-text"
+            className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 select-text"
           />
           <button
             onClick={handleReply}
-            className="text-xs font-medium px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+            className="text-xs font-medium px-3 py-1.5 bg-lime-600 hover:bg-lime-700 text-white rounded-lg transition-colors"
           >
             发送
           </button>
@@ -275,21 +275,21 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
           placeholder="你的昵称（可选，默认：匿名）"
           value={nameInput}
           onChange={(e) => setNameInput(e.target.value)}
-          className="w-full px-4 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all select-text"
+          className="w-full px-4 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all select-text"
         />
         <textarea
           rows={2}
           placeholder="写下你的评论..."
           value={contentInput}
           onChange={(e) => setContentInput(e.target.value)}
-          className="w-full px-4 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all resize-none select-text"
+          className="w-full px-4 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all resize-none select-text"
           required
         />
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={submitting}
-            className="bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs px-5 py-2 rounded-xl shadow-md shadow-teal-600/20 active:scale-95 transition-all disabled:opacity-50"
+            className="bg-lime-600 hover:bg-lime-700 text-white font-medium text-xs px-5 py-2 rounded-xl shadow-md shadow-lime-600/20 active:scale-95 transition-all disabled:opacity-50"
           >
             {submitting ? '发送中...' : '发表评论 ✨'}
           </button>

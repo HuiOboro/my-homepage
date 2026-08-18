@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# es 数据源/脚本(本地工作数据,不上线)
+/es_data
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

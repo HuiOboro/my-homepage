@@ -32,7 +32,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       <article className="max-w-3xl mx-auto px-6 pt-12">
         <Link
           href="/blog"
-          className="text-xs text-slate-500 hover:text-teal-600 transition-colors"
+          className="text-xs text-slate-500 hover:text-lime-600 transition-colors"
         >
           ← 返回博客列表
         </Link>
