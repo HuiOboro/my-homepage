@@ -27,15 +27,17 @@ export default function EsPage() {
         </Link>
 
         {/* Bright me up Eden 主视觉背景 hero */}
-        <div
-          className="relative rounded-3xl overflow-hidden border border-lime-200/70 shadow-sm mt-6"
-          style={{
-            backgroundImage: "url('/es/cover.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 25%',
-            minHeight: 340,
-          }}
-        >
+        <div className="relative rounded-3xl overflow-hidden border border-lime-200/70 shadow-sm mt-6 h-[240px] sm:h-[340px]">
+          {/* 用 <img> 铺底(object-cover)而非 CSS 背景: 浏览器原生处理缩放,不拉伸变形发虚;移动端自动加载小图 cover-mobile.jpg 加快首屏 */}
+          <picture>
+            <source media="(max-width:760px)" srcSet="/es/cover-mobile.jpg" />
+            <img
+              src="/es/cover.jpg"
+              alt="Bright me up Eden 主视觉"
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: '50% 25%' }}
+            />
+          </picture>
           <div
             className="absolute inset-0"
             style={{
@@ -43,7 +45,7 @@ export default function EsPage() {
                 'linear-gradient(100deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.6) 38%, rgba(255,255,255,.18) 72%, rgba(255,255,255,0) 100%)',
             }}
           ></div>
-          <div className="relative p-6 sm:p-8">
+          <div className="relative p-6 sm:p-8 z-10">
             <span className="inline-block bg-white/60 border border-lime-600/25 text-lime-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full mb-3 tracking-wide">
               Ensemble Stars!!
             </span>
