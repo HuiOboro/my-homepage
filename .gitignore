@@ -39,6 +39,11 @@ yarn-error.log*
 # es 数据源/脚本(本地工作数据,不上线)
 /es_data
 
+# 内部开发文档(仅本地,不上线)
+/AGENTS.md
+/CLAUDE.md
+/docs/superpowers/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

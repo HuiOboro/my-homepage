@@ -13,7 +13,7 @@ interface CommentItem {
   likes: number;
 }
 
-const ADMIN_PASSWORD = '123';
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '';
 
 function formatTime() {
   return new Date().toLocaleString('zh-CN', {
@@ -146,6 +146,10 @@ export default function BlogComments({ postSlug }: { postSlug: string }) {
   const handleAdminAuth = () => {
     if (isAdmin) {
       setIsAdmin(false);
+      return;
+    }
+    if (!ADMIN_PASSWORD) {
+      alert('管理员密码未配置，无法开启删除权限');
       return;
     }
     const input = prompt('请输入管理员密码开启删除权限：');

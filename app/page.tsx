@@ -78,7 +78,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const ADMIN_PASSWORD = '123'; // 管理员删除密码
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || ''; // 管理员删除密码（环境变量）
 
   // 从 Supabase 拉取留言数据
   const fetchComments = async () => {
@@ -147,6 +147,10 @@ export default function HomePage() {
     if (isAdmin) {
       setIsAdmin(false);
       alert('已退出管理员模式');
+      return;
+    }
+    if (!ADMIN_PASSWORD) {
+      alert('管理员密码未配置，无法开启删除权限');
       return;
     }
     const input = prompt('请输入管理员密码开启删除权限：');
