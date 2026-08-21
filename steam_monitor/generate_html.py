@@ -4,6 +4,7 @@
 用法(Windows):
   python generate_html.py         # 读库生成 steam-prices.html
 """
+import html
 import os
 import sys
 from datetime import date, timedelta
@@ -20,6 +21,7 @@ LIME_BG = "#eff6d0"
 RED = "#dc2626"
 TEXT = "#1e293b"
 MUTED = "#64748b"
+esc = html.escape  # Steam 来源字符串渲染进 HTML 前统一转义
 
 
 def format_price(cents):
@@ -101,8 +103,8 @@ def build_cards(conn, games, days=30):
         discount = latest["discount"]
         is_new_low = current <= lo and len(rows) > 1
 
-        img = f'<img class="card-img" src="{latest["image_url"]}" alt="{g["name"]}" loading="lazy"/>' \
-            if latest["image_url"] else f'<div class="card-img card-img-empty">{g["name"]}</div>'
+        img = f'<img class="card-img" src="{esc(latest["image_url"])}" alt="{esc(g["name"])}" loading="lazy"/>' \
+            if latest["image_url"] else f'<div class="card-img card-img-empty">{esc(g["name"])}</div>'
         orig_html = f'<span class="orig">¥{format_price(latest["original_cn"])}</span>' if discount > 0 else ""
         disc_html = f'<span class="disc">-{discount}%</span>' if discount > 0 else ""
         low_html = '<span class="low-badge">历史新低</span>' if is_new_low else ""
@@ -112,7 +114,7 @@ def build_cards(conn, games, days=30):
         <div class="card">
           {img}
           <div class="card-body">
-            <h2>{g["name"]}</h2>
+            <h2>{esc(g["name"])}</h2>
             <div class="price-row">
               <span class="now">¥{format_price(current)}</span>
               {orig_html}
