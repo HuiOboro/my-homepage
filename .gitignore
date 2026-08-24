@@ -44,6 +44,10 @@ douban/posters/
 douban/top250.html
 douban/__pycache__/
 
+# python
+__pycache__/
+*.pyc
+
 # 内部开发文档(仅本地,不上线)
 /AGENTS.md
 /CLAUDE.md
