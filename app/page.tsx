@@ -69,6 +69,15 @@ export default function HomePage() {
       active: true,
       tag: "应用",
     },
+    {
+      title: "豆瓣电影 Top250",
+      subtitle: "影视榜单筛选 · 个人练习",
+      gradient: "from-slate-500 via-slate-600 to-slate-800",
+      icon: "🎬",
+      link: "/douban/top250.html",
+      active: true,
+      tag: "个人练习",
+    },
   ];
 
   // 留言相关状态
