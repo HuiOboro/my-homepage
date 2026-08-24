@@ -3,6 +3,10 @@
 
 用法(Windows):
   python fetch_douban.py
+
+解析方式:
+  - Top250 页面: BeautifulSoup + CSS 选择器(解析器 lxml)
+  - 分类榜: JSON 接口
 """
 import json
 import os
@@ -10,6 +14,7 @@ import re
 import sys
 import time
 import urllib.request
+from bs4 import BeautifulSoup
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(BASE, "movies.json")
@@ -33,46 +38,60 @@ def fetch(url):
     return urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
 
 
-def clean(text):
-    return re.sub(r"\s+", " ", text.replace("&nbsp;", " ").replace("\xa0", " ")).strip()
+def split_bd(ptext):
+    """把 '导演: XX 主演: YY 1994 / 美国 / 犯罪 剧情' 拆成 (director, stars, meta)。"""
+    director, stars, meta = "", "", ""
+    parts = re.split(r"导演:|主演:", ptext)
+    if len(parts) > 1:
+        director = parts[1].strip()
+    if len(parts) > 2:
+        tail = parts[2].strip()
+        m = re.match(r"^(.*?)\s+(\d{4})\s*/\s*(.+)$", tail, re.S)
+        if m:
+            stars = m.group(1).strip()
+            meta = f"{m.group(2)} / {m.group(3)}".strip()
+        else:
+            stars = tail
+    return director, stars, meta
+
+
+def split_meta(meta):
+    """把 '1994 / 美国 / 犯罪 剧情' 拆成 (year, region, genres)。"""
+    year, region, genres = "", "", []
+    m = re.match(r"^(\d{4})\s*/\s*(.*?)(?:\s*/\s*(.*))?$", meta, re.S)
+    if m:
+        year = m.group(1)
+        region = (m.group(2) or "").strip()
+        if m.group(3):
+            genres = [x.strip() for x in re.split(r"\s+", m.group(3)) if x.strip()]
+    return year, region, genres
 
 
 def parse_top250_page(html):
-    """解析 Top250 一页(25条)的 HTML。"""
-    items = re.findall(r'<li>.*?<div class="item">(.*?)</div>\s*</li>', html, re.S)
+    """BeautifulSoup + CSS 选择器解析 Top250 一页(25条)。"""
+    soup = BeautifulSoup(html, "lxml")
     out = []
-    for raw in items:
-        def g(pat, group=1):
-            m = re.search(pat, raw, re.S)
-            return m.group(group) if m else None
-        rank = g(r"<em>(\d+)</em>")
-        title = g(r'<span class="title">([^<]+)</span>')
-        poster = g(r'<img[^>]*src="([^"]+)"')
-        ptext = clean(g(r"<p>\s*(.*?)</p>") or "")
-        quote = g(r'<p class="quote">\s*<span>([^<]+)</span>')
-        score = g(r'<span class="rating_num"[^>]*>([^<]+)</span>')
-        votes = g(r"<span>([\d,]+)人评价</span>")
+    for item in soup.select("ol.grid_view li .item"):
+        rank_el = item.select_one("em")
+        title_el = item.select_one("span.title")
+        img_el = item.select_one("img")
+        p_el = item.select_one("div.bd > p")
+        quote_el = item.select_one("p.quote span")
+        score_el = item.select_one("span.rating_num")
 
-        director, stars, meta = "", "", ""
-        parts = re.split(r"导演:|主演:", ptext)
-        if len(parts) > 1:
-            director = parts[1].strip()
-        if len(parts) > 2:
-            tail = parts[2].strip()
-            m = re.match(r"^(.*?)\s+(\d{4})\s*/\s*(.+)$", tail, re.S)
-            if m:
-                stars = m.group(1).strip()
-                meta = f"{m.group(2)} / {m.group(3)}".strip()
-            else:
-                stars = tail
+        rank = rank_el.get_text(strip=True) if rank_el else None
+        title = title_el.get_text(strip=True) if title_el else None
+        poster = img_el.get("src") if img_el else None
+        quote = quote_el.get_text(strip=True) if quote_el else None
+        score = score_el.get_text(strip=True) if score_el else None
+        votes = None
+        m = re.search(r"([\d,]+)人评价", item.get_text())
+        if m:
+            votes = m.group(1)
+        ptext = re.sub(r"\s+", " ", p_el.get_text(" ", strip=True)) if p_el else ""
 
-        year, region, genres = "", "", []
-        mmeta = re.match(r"^(\d{4})\s*/\s*(.*?)(?:\s*/\s*(.*))?$", meta, re.S)
-        if mmeta:
-            year = mmeta.group(1)
-            region = (mmeta.group(2) or "").strip()
-            if mmeta.group(3):
-                genres = [x.strip() for x in re.split(r"\s+", mmeta.group(3)) if x.strip()]
+        director, stars, meta = split_bd(ptext)
+        year, region, genres = split_meta(meta)
 
         out.append({
             "rank": rank, "title": title, "poster": poster,
@@ -124,7 +143,7 @@ def fetch_charts():
 
 
 def main():
-    print("== Top250 ==")
+    print("== Top250 (BeautifulSoup) ==")
     top = fetch_top250()
     print("== 分类榜 ==")
     charts = fetch_charts()
