@@ -18,6 +18,7 @@ export default function AccountingApp() {
   const [showBudgetModal, setShowBudgetModal] = useState<boolean>(false);
   const [tempBudget, setTempBudget] = useState<string>('3000');
   const [copied, setCopied] = useState<boolean>(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState<boolean>(false); // 分享菜单是否展开
   const [isLoaded, setIsLoaded] = useState<boolean>(false); // 标记数据是否已加载完成
 
   const [type, setType] = useState<'expense' | 'income'>('expense');
@@ -79,6 +80,11 @@ export default function AccountingApp() {
 
   const budgetUsagePercent = budget > 0 ? Math.min((totalExpense / budget) * 100, 100) : 0;
 
+  // 按消费时间倒序排序(最新的一笔在最上面),而非按添加顺序
+  const sortedRecords = [...records].sort((a, b) =>
+    String(b.datetime || '').localeCompare(String(a.datetime || ''))
+  );
+
   // 添加账单
   const handleAddRecord = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,23 +112,26 @@ export default function AccountingApp() {
     setRecords(records.filter((r) => r.id !== id));
   };
 
-  // 一键分享摘要
-  const handleShare = () => {
+  // 一键分享摘要(mode: 'recent' 分享近期消费, 'all' 分享全部账单)
+  const handleShare = (mode: 'recent' | 'all') => {
     let shareText = `📊 【我的记账明细分享】\n`;
     shareText += `-------------------------\n`;
     shareText += `💰 本月总支出：${totalExpense.toFixed(2)} 元\n`;
     shareText += `💵 本月总收入：${totalIncome.toFixed(2)} 元\n`;
     shareText += `🎯 每月预算：${budget.toFixed(2)} 元 (已使用 ${((totalExpense / budget) * 100).toFixed(1)}%)\n`;
     shareText += `-------------------------\n`;
-    shareText += `近期明细：\n`;
 
-    records.slice(0, 5).forEach((item) => {
+    const list = mode === 'all' ? sortedRecords : sortedRecords.slice(0, 5);
+    shareText += mode === 'all' ? `全部明细（共 ${list.length} 笔）：\n` : `近期明细（最近 ${list.length} 笔）：\n`;
+
+    list.forEach((item) => {
       const symbol = item.type === 'expense' ? '-' : '+';
       shareText += `• [${item.datetime}] ${item.category} ${symbol}${item.amount.toFixed(2)}元 ${item.note ? `(${item.note})` : ''}\n`;
     });
 
     navigator.clipboard.writeText(shareText).then(() => {
       setCopied(true);
+      setShareMenuOpen(false);
       setTimeout(() => setCopied(false), 2000);
     });
   };
@@ -140,12 +149,35 @@ export default function AccountingApp() {
             <h1 className="text-xl font-bold text-slate-900">📑 我的随手记账</h1>
             <p className="text-xs text-slate-500">随时随地，精准控费</p>
           </div>
-          <button
-            onClick={handleShare}
-            className="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition"
-          >
-            {copied ? '✅ 已复制摘要' : '📤 分享给朋友'}
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShareMenuOpen(!shareMenuOpen)}
+              className="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition"
+            >
+              {copied ? '✅ 已复制' : '📤 分享'}
+            </button>
+
+            {shareMenuOpen && (
+              <>
+                {/* 点击空白处关闭菜单 */}
+                <div className="fixed inset-0 z-10" onClick={() => setShareMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-20">
+                  <button
+                    onClick={() => handleShare('recent')}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    📅 近期消费（最近 5 笔）
+                  </button>
+                  <button
+                    onClick={() => handleShare('all')}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    📋 全部账单（共 {records.length} 笔）
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* 预算与支出卡片 */}
@@ -295,7 +327,7 @@ export default function AccountingApp() {
             <p className="text-center text-xs text-slate-400 py-6">暂无账单记录，快记一笔吧~</p>
           ) : (
             <div className="space-y-2.5 max-h-80 overflow-y-auto">
-              {records.map((item) => (
+              {sortedRecords.map((item) => (
                 <div
                   key={item.id}
                   className="flex justify-between items-center p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition"
