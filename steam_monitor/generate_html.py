@@ -174,7 +174,7 @@ def render_page(conn, games, days=30):
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/es">← 返回工具箱</a>
+  <a class="back" href="/">← 返回首页</a>
   <h1>Steam 游戏价格监控</h1>
   <div class="topbar">
     <span>监控 <span class="num">{total}</span> 款游戏</span>

@@ -58,3 +58,7 @@ __pycache__/
 next-env.d.ts
 
 .vercel
+/public/_pv/
+
+# superpowers 插件 brainstorm 产物
+/.superpowers/

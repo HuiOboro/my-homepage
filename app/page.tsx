@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
@@ -12,74 +12,107 @@ interface Comment {
   time: string;
 }
 
+// ===== 四套皮肤 · 每套内再随机抽壁纸 =====
+interface Wall {
+  src: string;
+  name: string; // 该壁纸对应的中文卡名
+  label?: string; // 该壁纸所属角色名（eyebrow 前缀）
+}
+// 角色 key 列表：单人=1 个，双人=2 个（数组顺序=从左到右）
+interface Theme {
+  key: string;
+  pill: string;
+  brandA: string;
+  brandB: string;
+  brandC: string;
+  eyebrow: string;
+  badge: string;
+  chars: string[];
+  online: string;
+  foot: string;
+}
+
+// WorkChibi 池子读不到时的兜底立绘（按角色 key）
+const CHIBI_FALLBACK: Record<string, string> = {
+  leo: '/images/work_leo.png',
+  sou: '/images/work_sou.png',
+  hiyori: '/images/work_hiyori.png',
+  jun: '/images/work_jun.png',
+};
+
+const THEMES: Theme[] = [
+  {
+    key: 'leo',
+    pill: 'レオ',
+    brandA: 'OBO',
+    brandB: 'RO',
+    brandC: '. × LEO',
+    eyebrow: 'Tsukinaga Leo · 纯粹的音色之束',
+    badge: '',
+    chars: ['leo'],
+    online: '呜啾～☆',
+    foot: '',
+  },
+  {
+    key: 'hiyori',
+    pill: '日和',
+    brandA: 'OBO',
+    brandB: 'RO',
+    brandC: '. × HIYORI',
+    eyebrow: 'Tomoe Hiyori · Eden 若草色',
+    badge: '',
+    chars: ['hiyori'],
+    online: '好日和♪',
+    foot: '',
+  },
+  {
+    key: 'leosou',
+    pill: 'レオ司',
+    brandA: 'OBO',
+    brandB: 'RO',
+    brandC: '. × KNIGHTS',
+    eyebrow: '月永レオ × 朱樱司 · Knights',
+    badge: '',
+    chars: ['leo', 'sou'], // レオ左 · 司右
+    online: '',
+    foot: '',
+  },
+  {
+    key: 'junhiyo',
+    pill: '純日和',
+    brandA: 'OBO',
+    brandB: 'RO',
+    brandC: '. × EDEN',
+    eyebrow: '漣純 × 巴日和 · Eden',
+    badge: '',
+    chars: ['jun', 'hiyori'], // Jun左 · 日和右
+    online: '',
+    foot: '',
+  },
+];
+
+// 去掉卡名里的 (CG2)/(CG1) 等档位标记，让 eyebrow 更干净
+const stripCG = (s?: string) => (s || '').replace(/\(CG\d*\)/gi, '').trim();
+
+// ===== Eden 歌单（背景音乐区，可点播、打开自动放） =====
+interface Track {
+  src: string;
+  title: string;
+  artist: string;
+  dur: string;
+}
+const TRACKS: Track[] = [
+  { src: '/music/01_ai_no_mae.mp3', title: '大いなる愛の前に全ては巡り来る', artist: 'Eden · あんさんぶるスターズ！！', dur: '3:29' },
+  { src: '/music/02_ai_no_mae_inst.mp3', title: '大いなる愛の前に全ては巡り来る (Instrumental)', artist: 'Eden · あんさんぶるスターズ！！', dur: '3:29' },
+  { src: '/music/03_bible.mp3', title: 'The Bible of The “Eden”', artist: 'Eden · あんさんぶるスターズ！！', dur: '6:00' },
+];
+
+// 首帧「朧」占位停留时长(ms)：让主题色淡入后再淡入主体
+const SPLASH_HOLD = 1200;
+// 主体淡入 / 启动屏淡出时长(ms)：需与 globals.css 里 .hl-splash.hl-out 的时长一致
+const SPLASH_OUT = 700;
+
 export default function HomePage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-
-  // 个人资料配置
-  const config = {
-    name: "朧",
-    bio: "记录代码、生活与每一个精彩瞬间 ✨",
-    bannerImage: "/images/1.jpg", 
-    avatarImage: "/images/1111.jpg", 
-
-    details: [
-      { icon: "🎂", label: "18 岁" },
-      { icon: "📍", label: "四川 · 成都" },
-      { icon: "🧩", label: "ENFP" },
-      { icon: "💤", label: "拖延症晚期" },
-    ]
-  };
-
-  // 应用卡片配置
-  const cards = [
-    {
-      title: "随手记账",
-      subtitle: "云端实时同步 · 轻量个人账本",
-      gradient: "from-emerald-400 via-lime-500 to-emerald-600",
-      icon: "💰",
-      link: "/accounting",
-      active: true,
-      tag: "应用",
-    },
-    {
-      title: "灵感画廊",
-      subtitle: "记录日常随手拍与生活风景",
-      gradient: "from-blue-400 via-indigo-500 to-blue-600",
-      icon: "📷",
-      link: "#",
-      active: false,
-      tag: "筹备中",
-    },
-    {
-      title: "个人博客",
-      subtitle: "技术笔记与学习思考随笔",
-      gradient: "from-green-200 via-green-300 to-green-400",
-      icon: "📖",
-      link: "/blog",
-      active: true,
-      tag: "应用",
-    },
-    {
-      title: "偶像梦幻祭 工具箱",
-      subtitle: "ES 资料合集 · 卡面一览等工具",
-      gradient: "from-lime-400 via-lime-500 to-lime-600",
-      icon: "🎤",
-      link: "/es",
-      active: true,
-      tag: "应用",
-    },
-    {
-      title: "豆瓣电影 Top250",
-      subtitle: "影视榜单筛选 · 个人练习",
-      gradient: "from-slate-500 via-slate-600 to-slate-800",
-      icon: "🎬",
-      link: "/douban/top250.html",
-      active: true,
-      tag: "个人练习",
-    },
-  ];
-
   // 留言相关状态
   const [nameInput, setNameInput] = useState('');
   const [contentInput, setContentInput] = useState('');
@@ -87,24 +120,150 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [musicOn, setMusicOn] = useState(false);
+  const [trackIdx, setTrackIdx] = useState(0);
+  const [musicOpen, setMusicOpen] = useState(false);
+  const [volume, setVolume] = useState(0.8);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 主题 + 壁纸：先读 /walls/manifest.json 拿各皮肤壁纸池，再随机皮肤、随机该皮肤内一张
+  // （ti 为 null = 首帧占位，防止服务端/客户端随机不一致导致 hydration 报错）
+  const [pool, setPool] = useState<Record<string, Wall[]> | null>(null);
+  const [ti, setTi] = useState<number | null>(null);
+  const [wall, setWall] = useState(0);
+  const pickWall = (list: Wall[]) => (list.length ? Math.floor(Math.random() * list.length) : 0);
+
+  // WorkChibi 随机贴纸：/qstick 池（qpoolRef，单人用）+ 同服装配对（pairRef，双人用）
+  // 双人皮肤 = 从「同服装配套」里随机抽一对，左右角色固定，保证两小人「搭」
+  interface QPair { n: string; l: string; r: string; }
+  const qpoolRef = useRef<Record<string, string[]> | null>(null);
+  const pairRef = useRef<Record<string, QPair[]> | null>(null);
+  const [stick, setStick] = useState<string[]>([]);
+  const pickStickers = (t: number): string[] => {
+    const th = THEMES[t];
+    // 双人：优先抽同服装配套（pair 顺序 = 左 l / 右 r）
+    if (th.chars.length > 1) {
+      const pl = (pairRef.current || {})[th.key];
+      if (pl && pl.length) {
+        const pr = pl[Math.floor(Math.random() * pl.length)];
+        return [pr.l, pr.r];
+      }
+    }
+    // 单人 / 配对池缺失：按角色从整池随机（兜底）
+    return th.chars.map((c) => {
+      const arr = (qpoolRef.current || {})[c];
+      if (arr && arr.length) return arr[Math.floor(Math.random() * arr.length)];
+      return CHIBI_FALLBACK[c] || '';
+    });
+  };
+
+  // 首帧启动屏状态：随机主题定下后「朧」在主题色上停留 SPLASH_HOLD，
+  // 再 hl-out 淡出并卸载（hl-gone）。只在整页刷新时出现一次，换皮肤不会重播。
+  const [revealed, setRevealed] = useState(false);
+  const [gone, setGone] = useState(false);
+  const holdTimer = useRef<number | null>(null);
+  const outTimer = useRef<number | null>(null);
+
+  // 个人资料配置（四套皮肤共用）
+  const config = {
+    name: '朧',
+    bio: '记录代码、生活与每一个精彩瞬间 ✨',
+    avatarImage: '/images/1111.jpg',
+    details: [
+      { icon: '🎂', label: '18 岁' },
+      { icon: '📍', label: '四川 · 成都' },
+      { icon: '🧩', label: 'ENFP' },
+      { icon: '💤', label: '拖延症晚期' },
+    ],
+  };
+
+  // 应用卡片配置
+  const cards = [
+    { title: '随手记账', subtitle: '云端实时同步 · 轻量个人账本', icon: '💰', link: '/accounting', active: true, tag: '应用' },
+    { title: '灵感画廊', subtitle: '记录日常随手拍与生活风景', icon: '📷', link: '#', active: false, tag: '筹备中' },
+    { title: '个人博客', subtitle: '技术笔记与学习思考随笔', icon: '📖', link: '/blog', active: true, tag: '应用' },
+    { title: '偶像梦幻祭 工具箱', subtitle: 'ES 资料合集 · 卡面一览等工具', icon: '🎤', link: '/es', active: true, tag: '应用' },
+    { title: '豆瓣电影 Top250', subtitle: '影视榜单筛选 · 个人练习', icon: '🎬', link: '/douban/top250.html', active: true, tag: '个人练习' },
+    { title: '我的课表', subtitle: '2026 秋季大二 · Leo/日和 双主题块状课表', icon: '🗓️', link: '/timetable.html', active: true, tag: '应用' },
+  ];
+
   const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || ''; // 管理员删除密码（环境变量）
 
   // 从 Supabase 拉取留言数据
   const fetchComments = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('comments')
-      .select('*')
-      .order('id', { ascending: false });
-
-    if (!error && data) {
-      setComments(data);
-    }
+    const { data, error } = await supabase.from('comments').select('*').order('id', { ascending: false });
+    if (!error && data) setComments(data);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchComments();
+  }, []);
+
+  // 随机皮肤 + 壁纸/贴纸（仅客户端执行一次）。
+  // 关键：主题与启动屏淡出不依赖网络——先定主题、立即开始计时，
+  // 壁纸/贴纸清单在后台拉，任何请求卡住/失败都不会让页面永远停在「朧」。
+  useEffect(() => {
+    let alive = true;
+    const t = Math.floor(Math.random() * THEMES.length);
+    // 兜底壁纸池：读不到 manifest 时仍有各自皮肤可用（Leo 有主视觉图，其余走主题渐变底）
+    const fallback: Record<string, Wall[]> = {
+      leo: [{ src: '/images/leo_hero.jpg', name: 'Tsukinaga Leo' }],
+      hiyori: [],
+      leosou: [],
+      junhiyo: [],
+    };
+    setPool(fallback);
+    // 1) 先定随机主题 → 启动屏立刻换主题色，并按时淡出（1200ms 后 hl-out）
+    setTi(t);
+    setWall(0);
+    setStick(pickStickers(t)); // 贴纸池没回来前先用兜底立绘，也能立刻显示
+    holdTimer.current = window.setTimeout(() => {
+      if (alive) setRevealed(true);
+    }, SPLASH_HOLD);
+    outTimer.current = window.setTimeout(() => {
+      if (alive) setGone(true);
+    }, SPLASH_HOLD + SPLASH_OUT);
+    // 2) 后台拉壁纸 + 贴纸池 + 配对；整体 6s 内没返回就放弃（不卡启动屏）
+    const timeout = (ms: number) => new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
+    (async () => {
+      const settled = await Promise.race([
+        Promise.all([
+          fetch('/walls/manifest.json').catch(() => null),
+          fetch('/qstick/index.json').catch(() => null),
+          fetch('/qstick/pairs.json').catch(() => null),
+        ]),
+        timeout(6000),
+      ]);
+      if (!settled || !alive) return;
+      const [mr, qr, pr] = settled;
+      const p = { ...fallback };
+      if (mr && mr.ok) {
+        const j = await mr.json();
+        Object.assign(p, j);
+      }
+      if (qr && qr.ok) qpoolRef.current = await qr.json();
+      if (pr && pr.ok) pairRef.current = await pr.json();
+      if (!alive) return;
+      setPool(p);
+      const list = p[THEMES[t].key] || [];
+      setWall(pickWall(list));
+      setStick(pickStickers(t));
+    })();
+    return () => {
+      alive = false;
+      if (holdTimer.current) {
+        clearTimeout(holdTimer.current);
+        holdTimer.current = null;
+      }
+      if (outTimer.current) {
+        clearTimeout(outTimer.current);
+        outTimer.current = null;
+      }
+    };
   }, []);
 
   // 发表留言到 Supabase 云端
@@ -119,15 +278,11 @@ export default function HomePage() {
         month: 'numeric',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
-      })
+        minute: '2-digit',
+      }),
     };
 
-    const { data, error } = await supabase
-      .from('comments')
-      .insert([newComment])
-      .select();
-
+    const { data, error } = await supabase.from('comments').insert([newComment]).select();
     if (error) {
       console.error('Supabase 报错详情：', error);
       alert(`留言发送失败！原因：${error.message} (错误代码: ${error.code})`);
@@ -139,13 +294,9 @@ export default function HomePage() {
 
   // 删除留言
   const handleDeleteComment = async (id: string | number) => {
-    const { error } = await supabase
-      .from('comments')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await supabase.from('comments').delete().eq('id', id);
     if (!error) {
-      setComments(comments.filter(c => c.id !== id));
+      setComments(comments.filter((c) => c.id !== id));
     } else {
       alert('删除失败');
     }
@@ -171,310 +322,356 @@ export default function HomePage() {
     }
   };
 
+  // 背景音乐：播放指定曲目（i 为 TRACKS 索引）
+  const play = async (i: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (i !== trackIdx) {
+      setTrackIdx(i);
+      const src = TRACKS[i].src;
+      if (audio.src !== new URL(src, window.location.href).href) audio.src = src;
+    }
+    try {
+      await audio.play();
+      setMusicOn(true);
+    } catch {
+      setMusicOn(false);
+      alert('音乐文件还没放好：请把 mp3 复制到 public/music/，刷新后就能播了。');
+    }
+  };
+  // 上一首/下一首：当前曲目播完自动切下一首，末尾回到第一首
+  const next = () => play((trackIdx + 1) % TRACKS.length);
+  // 播放/暂停开关（点浮动按钮用，暂停/继续当前曲目）
+  const toggleMusic = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (musicOn) {
+      audio.pause();
+      setMusicOn(false);
+      return;
+    }
+    play(trackIdx);
+  };
+  // 打开页面自动播放：首次 play() 可能被浏览器自动播放策略拦截，
+  // 被拦后挂一次 pointerdown/touchstart 监听，用户任意点击即可开始播放。
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume;
+    audio.play().then(() => setMusicOn(true)).catch(() => {
+      const kick = () => {
+        audio.play().then(() => setMusicOn(true)).catch(() => {});
+        document.removeEventListener('pointerdown', kick);
+        document.removeEventListener('touchstart', kick);
+      };
+      document.addEventListener('pointerdown', kick, { once: true });
+      document.addEventListener('touchstart', kick, { once: true });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // 调整音量：同步到 audio 元件
+  const changeVol = (v: number) => {
+    setVolume(v);
+    const audio = audioRef.current;
+    if (audio) audio.volume = v;
+  };
+
+  // 首帧启动屏：随机主题还没决定（ti===null）或尚未淡出完成（!gone）前，
+  // 「朧」固定在视口最上层，主题一旦定下其背景即换为该主题的配色。
+  const th = ti === null ? null : THEMES[ti];
+  const wallList = (th ? pool?.[th.key] : null) || ([] as Wall[]);
+  const wallItem = wallList.length ? wallList[wall % wallList.length] : null;
+  const wallUrl = wallItem?.src ?? null;
+  const switchTheme = () => {
+    if (ti === null) return;
+    const n = (ti + 1) % THEMES.length;
+    const list = pool?.[THEMES[n].key] || ([] as Wall[]);
+    setTi(n);
+    setWall(pickWall(list));
+    setStick(pickStickers(n));
+  };
+
+  const showSplash = ti === null || !gone;
+
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-20 select-none relative">
-      
-      {/* 顶部 Banner */}
-      <div className="w-full h-36 sm:h-52 relative overflow-hidden bg-slate-900">
-        <img src={config.bannerImage} alt="Banner" className="w-full h-full object-cover object-top opacity-90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10"></div>
-      </div>
-
-      {/* 个人名片卡片 */}
-      <div className="max-w-4xl mx-auto px-6 relative -mt-10 mb-8 z-20">
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 sm:p-7 border border-white/80 shadow-xl shadow-slate-200/50">
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                <div onClick={() => setIsModalOpen(true)} className="relative group shrink-0 cursor-pointer">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white ring-4 ring-slate-100/80 shadow-xl overflow-hidden bg-slate-100 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
-                    <img src={config.avatarImage} alt="Avatar" className="w-full h-full object-cover" />
-                  </div>
-                  <span className="absolute -top-1 -right-1 bg-lime-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
-                    🔍 点击名片
-                  </span>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h1 onClick={() => setIsModalOpen(true)} className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight hover:text-lime-600 transition-colors cursor-pointer">
-                      {config.name}
-                    </h1>
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-lime-50 text-lime-600 border border-lime-200/60">
-                      PRO
-                    </span>
-                  </div>
-                  <p className="text-slate-500 text-sm mt-1 leading-relaxed">{config.bio}</p>
-                </div>
-              </div>
-
-              <div className="flex sm:flex-col items-center sm:items-end gap-2.5 w-full sm:w-auto justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
-                <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100/80 px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-inner flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse"></span>
-                  huioboro.xyz
-                </span>
-
-                <button
-                  onClick={() => setIsCommentModalOpen(true)}
-                  className="bg-gradient-to-r from-lime-500 to-emerald-500 hover:from-lime-600 hover:to-emerald-600 text-white font-bold text-xs px-4 py-2 rounded-2xl shadow-lg shadow-lime-500/20 active:scale-95 transition-all flex items-center gap-1.5"
-                >
-                  <span>💬 互动留言板</span>
-                  <span suppressHydrationWarning className="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">
-                    {comments.length}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-3.5 border-t border-slate-100 flex flex-wrap gap-2.5">
-              {config.details.map((item, index) => (
-                <div key={index} className="flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-100/90 px-3 py-1.5 rounded-xl border border-slate-200/50">
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                </div>
-              ))}
-            </div>
+    <div className={`hl-stage${!revealed ? ' hl-lock' : ''}`}>
+      {th && (
+    <main className="hl-main" data-theme={th.key}>
+      {/* 首屏：皮肤内随机壁纸；没壁纸时用贴纸卡占位 */}
+      <div className="hl-hero">
+        {wallUrl ? (
+          /* 桌面整张铺满；双人皮肤在手机(≤700px)拆成左右两块，各对准一边人物 */
+          <div className="hl-bgframe">
+            <img className="hl-bg" src={wallUrl} alt="" />
+            <img className="hl-bg" src={wallUrl} alt="" aria-hidden="true" />
           </div>
-        </div>
-      </div>
-
-      {/* 应用展示区 */}
-      <div className="max-w-4xl mx-auto px-6 mb-8">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 mb-5">
-          <span className="w-1.5 h-1.5 rounded-full bg-lime-500"></span>
-          我的应用与空间
-        </h2>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cards.map((card, index) => (
-            <div key={index} className="group">
-              {card.active ? (
-                <Link href={card.link} className="block h-full">
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-slate-200/80 transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col justify-between">
-                    <div className="h-44 overflow-hidden relative bg-slate-100">
-                      <div className={`w-full h-full bg-gradient-to-br ${card.gradient} flex items-center justify-center text-4xl shadow-inner text-white`}>
-                        {card.icon}
-                      </div>
-                      <span className="absolute top-3 right-3 bg-black/40 backdrop-blur-md text-white text-[10px] font-medium px-2.5 py-1 rounded-full border border-white/20">
-                        {card.tag}
-                      </span>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="font-bold text-slate-900 text-lg group-hover:text-lime-600 transition-colors flex items-center justify-between">
-                        {card.title}
-                        <span className="text-sm opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-lime-600">→</span>
-                      </h3>
-                      <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">{card.subtitle}</p>
-                    </div>
-                  </div>
-                </Link>
-              ) : (
-                <div className="bg-white/60 rounded-2xl overflow-hidden shadow-sm border border-slate-200/60 opacity-60 h-full flex flex-col justify-between">
-                  <div className="h-44 overflow-hidden relative bg-slate-100">
-                    <div className="w-full h-full bg-slate-200/70 flex items-center justify-center text-4xl grayscale">
-                      {card.icon}
-                    </div>
-                    <span className="absolute top-3 right-3 bg-slate-200 text-slate-600 text-[10px] font-medium px-2.5 py-1 rounded-full">
-                      {card.tag}
-                    </span>
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-slate-700 text-lg">{card.title}</h3>
-                    <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">{card.subtitle}</p>
-                  </div>
-                </div>
-              )}
-            </div>
+        ) : (
+          <div className="hl-herobg" />
+        )}
+        {/* WorkChibi 手账贴纸：单人=1张，双人=2张（数组顺序=从左到右），每次刷新随机换款 */}
+        <div className="hl-chibi">
+          {stick.map((s) => (
+            <img key={s} src={s} alt="" />
           ))}
         </div>
+        <div className="hl-top">
+          <div className="hl-brand">
+            {th.brandA}
+            <b>{th.brandB}</b>
+            {th.brandC}
+          </div>
+          <div className="hl-nav">
+            <button className="hl-chip hl-chipb" onClick={() => setIsCommentModalOpen(true)}>
+              💬 留言<b>{comments.length}</b>
+            </button>
+          </div>
+        </div>
+        <div className="hl-tagline">
+          <div className="hl-eyebrow">
+            {wallItem
+              ? wallItem.name
+                ? `${wallItem.label ?? th.pill} · ${stripCG(wallItem.name)}`
+                : (wallItem.label ?? th.pill)
+              : th.eyebrow}
+          </div>
+          <h1 className="hl-title">
+            朧<em>.</em>
+          </h1>
+        </div>
       </div>
 
-      {/* 悬浮常驻留言按钮 */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => setIsCommentModalOpen(true)}
-          className="bg-slate-900/90 hover:bg-slate-900 text-white backdrop-blur-md px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-bold active:scale-90 transition-all hover:scale-105"
-        >
-          <span className="text-base">💬</span>
-          <span>留言板</span>
-          <span suppressHydrationWarning className="bg-lime-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-            {comments.length}
-          </span>
+      {/* 叠层资料卡 */}
+      <div className="hl-body">
+        <div className="hl-panel">
+          <div className="hl-id">
+            <div className="hl-avawrap">
+              <div className="hl-ava" onClick={() => setIsModalOpen(true)} style={{ cursor: 'pointer' }}>
+                <img src={config.avatarImage} alt="朧" />
+              </div>
+            </div>
+
+            <div className="hl-who">
+              <div className="hl-nm">
+                <h2 onClick={() => setIsModalOpen(true)} style={{ cursor: 'pointer' }}>
+                  {config.name}
+                </h2>
+                {th.badge && <span className="hl-goldtag">{th.badge}</span>}
+              </div>
+              <p className="hl-bio">{config.bio}</p>
+              <div className="hl-domain">
+                <i></i> huioboro.xyz
+              </div>
+            </div>
+
+            <div className="hl-right">
+              {th.online && <span className="hl-online">{th.online}</span>}
+              <button className="hl-cta" onClick={() => setIsCommentModalOpen(true)}>
+                💬 互动留言板 <small>{comments.length}</small>
+              </button>
+            </div>
+          </div>
+
+          <div className="hl-meta">
+            {config.details.map((item, index) => (
+              <span key={index}>
+                {item.icon} {item.label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* 应用区 */}
+        <div className="hl-sec">
+          <h3>我的应用与空间</h3>
+        </div>
+        <div className="hl-grid">
+          {cards.map((card, index) =>
+            card.active ? (
+              <Link key={index} href={card.link} className="hl-tile">
+                <span className="hl-tag">{card.tag}</span>
+                <div className="hl-ico">{card.icon}</div>
+                <div className="hl-t">
+                  {card.title} <span className="hl-go">→</span>
+                </div>
+                <div className="hl-s">{card.subtitle}</div>
+              </Link>
+            ) : (
+              <div key={index} className="hl-tile hl-dim">
+                <div className="hl-ico">{card.icon}</div>
+                <div className="hl-t">{card.title}</div>
+                <div className="hl-s">{card.subtitle}</div>
+                <span className="hl-stamp">籌備中</span>
+              </div>
+            )
+          )}
+        </div>
+
+        <footer className="hl-footer">
+          © 2026 huioboro.xyz · Personal Station
+        </footer>
+      </div>
+
+      {/* 背景音乐：左下角浮动按钮 + 展开面板 */}
+      <audio ref={audioRef} preload="auto" src={TRACKS[trackIdx].src} onEnded={next} />
+      <div className="hl-muswrap">
+        {musicOpen && (
+          <div className="hl-muspanel">
+            <div className="hl-mushead">
+              <div className="hl-musnow">
+                <span className="hl-muslbl">{musicOn ? '播放中' : '已暂停'}</span>
+                <b>{TRACKS[trackIdx].title}</b>
+              </div>
+              <button className="hl-musclose" onClick={() => setMusicOpen(false)} title="收起">✕</button>
+            </div>
+            <div className="hl-muslist">
+              {TRACKS.map((t, i) => (
+                <button key={i} className={`hl-track${i === trackIdx ? ' hl-trackon' : ''}`} onClick={() => play(i)}>
+                  <span className="hl-trkno">{i + 1}</span>
+                  <span className="hl-trkname">{t.title}</span>
+                  {i === trackIdx && musicOn && <span className="hl-trkply">▶</span>}
+                </button>
+              ))}
+            </div>
+            <div className="hl-musvol">
+              <label htmlFor="hlvol" title="音量">🔊</label>
+              <input id="hlvol" type="range" min={0} max={1} step={0.01}
+                value={volume} onChange={(e) => changeVol(Number(e.target.value))} />
+              <span className="hl-volpct">{Math.round(volume * 100)}%</span>
+            </div>
+          </div>
+        )}
+        <button className={`hl-mus ${musicOn ? 'playing' : ''}`} onClick={() => setMusicOpen((o) => !o)} title="背景音乐">
+          {musicOn ? '⏸ 音乐播放中' : '🎵 播放音乐'}
+          <small className="hl-mustag">{TRACKS[trackIdx].dur}</small>
         </button>
       </div>
 
-      {/* ======================================================== */}
-      {/* 1. 详细名片 Modal (原汁原味集成你提供的完整 UI)            */}
-      {/* ======================================================== */}
+      {/* 悬浮留言按钮 */}
+      <button className="hl-fab" onClick={() => setIsCommentModalOpen(true)}>
+        💬 留言 <b>{comments.length}</b>
+      </button>
+
+      {/* 主题切换（预览用，可随时去掉） */}
+      <button className="hl-themesw" onClick={switchTheme} title="随机换一套">
+        🎲 {th.pill}
+      </button>
+
+      {/* ===== 详细名片弹窗 ===== */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsModalOpen(false)}></div>
-
-          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 z-10 overflow-hidden max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200">
-            
-            {/* 顶部 Header */}
-            <div className="relative p-6 bg-gradient-to-br from-slate-50 to-lime-50/30 border-b border-slate-100 flex items-center gap-4">
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white hover:bg-slate-100 shadow-sm flex items-center justify-center text-slate-500 font-bold transition-colors z-10"
-              >
-                ✕
-              </button>
-
-              <div className="w-16 h-16 rounded-full border-2 border-white ring-2 ring-lime-500/30 shadow-md overflow-hidden bg-slate-100 shrink-0">
-                <img src={config.avatarImage} alt="Avatar" className="w-full h-full object-cover" />
+        <div className="hl-mask">
+          <div className="hl-modal" style={{ maxWidth: 520 }}>
+            <button className="hl-close" onClick={() => setIsModalOpen(false)}>
+              ✕
+            </button>
+            <div className="hl-mhead">
+              <div className="av">
+                <img src={config.avatarImage} alt="Avatar" />
               </div>
-
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-extrabold text-slate-900">{config.name}</h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-lime-50 text-lime-600 border border-lime-200/60">
-                    PRO
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">{config.bio}</p>
+                <h3>{config.name}</h3>
+                <p style={{ color: '#9d9077', fontSize: 12, marginTop: 3 }}>{config.bio}</p>
               </div>
             </div>
-
-            {/* 弹窗主体：完美复现你提供的 HTML 结构 */}
-            <div className="p-6 overflow-y-auto space-y-6 text-left">
-              {/* 关于我 */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  💡 关于我
-                </h3>
-                <div className="bg-slate-50 p-4 rounded-2xl text-slate-600 text-sm leading-relaxed border border-slate-100">
-                  👋 嗨！我是朧。这里是我的个人空间预览区域。
-                </div>
+            <div className="hl-mbody">
+              <div className="hl-msec">
+                <h4>💡 关于我</h4>
+                <div className="hl-box">👋 嗨！我是朧。这里是我的个人空间，随缘更新代码与生活。</div>
               </div>
-
-              {/* 状态与喜好 */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  🎯 状态与喜好
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-lime-50/50 border border-lime-100 text-xs">
-                    <div className="font-bold text-lime-800 mb-1">🎮 游戏</div>
-                    <div className="text-lime-600">单机 / 休闲 / 开放世界</div>
+              <div className="hl-msec">
+                <h4>🎯 状态与喜好</h4>
+                <div className="hl-duo">
+                  <div className="hl-in2">
+                    <b>♛ 推し</b>
+                    <div>月永レオ · 巴日和</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 text-xs">
-                    <div className="font-bold text-blue-800 mb-1">🎧 音乐</div>
-                    <div className="text-blue-600">流行 / 电子 / 动漫 OST</div>
+                  <div className="hl-in2">
+                    <b>❤️ 応援CP</b>
+                    <div>レオ司 / 純日和</div>
+                  </div>
+                  <div className="hl-in2">
+                    <b>🎮 游戏</b>
+                    <div>单机 / 休闲 / 开放世界</div>
+                  </div>
+                  <div className="hl-in2">
+                    <b>🎧 音乐</b>
+                    <div>流行 / 电子 / 动漫 OST</div>
                   </div>
                 </div>
               </div>
-
-              {/* 如何联系我 */}
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  📬 如何联系我
-                </h3>
-                <div className="flex flex-wrap gap-3 text-xs font-mono">
-                  <span className="px-3 py-2 bg-slate-100 rounded-xl text-slate-600 border border-slate-200">
-                    Domain: huioboro.xyz
-                  </span>
-                  <span className="px-3 py-2 bg-slate-100 rounded-xl text-slate-600 border border-slate-200">
-                    GitHub: @huioboro
-                  </span>
+              <div className="hl-msec">
+                <h4>📬 如何联系我</h4>
+                <div className="hl-box" style={{ fontFamily: 'ui-monospace,Consolas,monospace', fontSize: 12 }}>
+                  Domain: huioboro.xyz　·　GitHub: @huioboro
                 </div>
               </div>
-            </div>
-
-            {/* 底部提示语 */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 text-center text-xs text-slate-400">
-              💡 提示：以上内容为详细主页框架预览！
             </div>
           </div>
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 2. 云端同步留言板 Modal                                    */}
-      {/* ======================================================== */}
+      {/* ===== 留言板弹窗 ===== */}
       {isCommentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
-          <div className="absolute inset-0" onClick={() => setIsCommentModalOpen(false)}></div>
-
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 z-10 max-h-[85vh] flex flex-col">
-            
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">💬</span>
-                <h2 className="text-base font-extrabold text-slate-900">全端同步留言板</h2>
-                <span suppressHydrationWarning className="text-xs font-normal text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded-full ml-1">
+        <div className="hl-mask">
+          <div className="hl-modal" style={{ maxWidth: 640, width: '100%' }}>
+            <button className="hl-close" onClick={() => setIsCommentModalOpen(false)}>
+              ✕
+            </button>
+            <div className="hl-mhead" style={{ justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 18 }}>💬</span>
+                <h3>全端同步留言板</h3>
+                <span style={{ fontSize: 11, color: '#b39a4f', background: '#f6efdd', padding: '2px 9px', borderRadius: 999 }}>
                   {comments.length} 条留言
                 </span>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleAdminAuth}
-                  className={`text-[11px] px-2.5 py-1 rounded-xl transition-all font-medium ${
-                    isAdmin ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-slate-200/70 text-slate-600'
-                  }`}
-                >
-                  {isAdmin ? '🔓 已开启删除' : '🔒 管理员'}
-                </button>
-                <button 
-                  onClick={() => setIsCommentModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-200/60 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition-colors ml-1"
-                >
-                  ✕
-                </button>
-              </div>
+              <button className={`hl-adminbtn ${isAdmin ? 'on' : ''}`} onClick={handleAdminAuth}>
+                {isAdmin ? '🔓 已开启删除' : '🔒 管理员'}
+              </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-6">
-              <form onSubmit={handleAddComment} className="space-y-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
-                <input 
-                  type="text" 
-                  placeholder="你的昵称（可选，默认：热心网友）" 
+            <div className="hl-mbody" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <form onSubmit={handleAddComment} className="hl-form">
+                <input
+                  type="text"
+                  placeholder="你的昵称（可选，默认：热心网友）"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="w-full px-4 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all select-text"
+                  className="hl-field"
+                  style={{ marginTop: 0 }}
                 />
-                <textarea 
+                <textarea
                   rows={3}
-                  placeholder="给 朧 留个言吧..." 
+                  placeholder="给 朧 留个言吧..."
                   value={contentInput}
                   onChange={(e) => setContentInput(e.target.value)}
-                  className="w-full px-4 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all resize-none select-text"
+                  className="hl-field"
                   required
                 />
-                <div className="flex justify-end">
-                  <button 
-                    type="submit" 
-                    className="bg-lime-600 hover:bg-lime-700 text-white font-medium text-xs px-5 py-2 rounded-xl shadow-md shadow-lime-600/20 active:scale-95 transition-all"
-                  >
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="submit" className="hl-send">
                     发送云端留言 ✨
                   </button>
                 </div>
               </form>
 
-              {/* 留言列表 */}
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {loading ? (
-                  <div className="text-center py-10 text-slate-400 text-xs">正在连接 Supabase 云数据库...</div>
+                  <div className="hl-empty">正在连接 Supabase 云数据库...</div>
                 ) : comments.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                    还没云端留言哦，快来抢沙发吧~
-                  </div>
+                  <div className="hl-empty">还没云端留言哦，快来抢沙发吧~</div>
                 ) : (
                   comments.map((item) => (
-                    <div key={item.id} className="p-4 bg-slate-50/80 rounded-2xl border border-slate-100 flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-800">{item.name}</span>
-                          <span className="text-[10px] text-slate-400">{item.time}</span>
-                        </div>
-                        <p className="text-xs text-slate-600 leading-relaxed select-text">{item.content}</p>
+                    <div key={item.id} className="hl-citem" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <span className="who">{item.name}</span>
+                        <span className="time">{item.time}</span>
+                        <p>{item.content}</p>
                       </div>
-                      
                       {isAdmin && (
-                        <button 
+                        <button
+                          className="hl-del"
                           onClick={() => handleDeleteComment(item.id)}
-                          className="text-xs text-red-500 hover:text-red-700 font-medium px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 transition-colors ml-2 shrink-0"
+                          style={{ alignSelf: 'flex-start', flexShrink: 0 }}
                         >
                           删除
                         </button>
@@ -485,17 +682,35 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="px-6 py-3 bg-slate-50/80 border-t border-slate-100 text-center text-[11px] text-slate-400">
+            <div
+              style={{
+                padding: '10px 28px 14px',
+                textAlign: 'center',
+                fontSize: 11,
+                color: '#c2b48a',
+                borderTop: '1px dashed #ece0c6',
+              }}
+            >
               🌐 已连接 Supabase 云端数据库 · 多端实时同步
             </div>
           </div>
         </div>
       )}
-
-      {/* 页脚 */}
-      <footer className="mt-20 text-center text-xs text-slate-400">
-        © 2026 huioboro.xyz · Personal Station
-      </footer>
     </main>
+      )}
+
+      {/* 首帧「朧」启动屏：主题未定=中性底；主题定下=换主题配色并渐变浮现 */}
+      {showSplash && (
+        <div
+          className={`hl-splash${th ? ' hl-themed' : ''}${revealed ? ' hl-out' : ''}`}
+          data-theme={th ? th.key : undefined}
+        >
+          <span className="hl-wash" aria-hidden />
+          <div className="hl-soboro">
+            朧<span>.</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

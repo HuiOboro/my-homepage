@@ -28,6 +28,13 @@ export default function RootLayout({
       lang="zh-CN" // 👈 将网页语言设置为中文
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/*
+          声明本页是浅色主题：避免夸克/vivo 等浏览器的“深色模式/夜间模式”
+          把浅色页面整页反色（启动屏变黑、背景变深、透明小人生灰底等）
+        */}
+        <meta name="color-scheme" content="light" />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
