@@ -318,9 +318,10 @@ export default function HomePage() {
   const wallList = (th ? pool?.[th.key] : null) || ([] as Wall[]);
   const wallItem = wallList.length ? wallList[wall % wallList.length] : null;
   const wallUrl = wallItem?.src ?? null;
-  // 双人皮肤：手机(≤700px)换用 scripts/build_cp_mobile.py 生成的竖版拼图
-  // （上=左立绘 / 下=右立绘）。原图是 3120x720 的横条，竖屏里 cover 只会露出中间一道，
-  // 两个人都会被裁。竖版图比率 ~0.9，正好贴合手机 hero，两个人都在且够大。
+  // 双人皮肤：手机(≤700px)换用 scripts/build_cp_mobile.py 生成的「两张卡片」图。
+  // 原图是 3120x720 的横条，竖屏里 cover 只会露出中间一道，两个人都会被裁。
+  // 手机版 = 模糊底 + 两张圆角卡片(各一位角色)，尺寸 1170x1104 = 1.06:1，
+  // 正好是手机 hero(42vh) 的比例；CSS 里 .hl-hero.hl-cpm 也照这个比例锁死，不会被裁。
   const wallUrlM =
     wallUrl && th && th.chars.length > 1 ? wallUrl.replace(/\.jpg$/, '_m.jpg') : null;
   // 把当前皮肤广播给全局音乐悬浮件（app/music.tsx 的 MusicDock），
@@ -350,7 +351,7 @@ export default function HomePage() {
       {th && (
     <main className="hl-main" data-theme={th.key}>
       {/* 首屏：皮肤内随机壁纸；没壁纸时用贴纸卡占位 */}
-      <div className="hl-hero">
+      <div className={`hl-hero${wallUrlM ? ' hl-cpm' : ''}`}>
         {wallUrl ? (
           /* 桌面用原横图整张铺满；双人皮肤手机(≤700px)切到竖版拼图 */
           <div className="hl-bgframe">
