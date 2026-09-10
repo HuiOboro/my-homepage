@@ -92,7 +92,10 @@ body{
 .mx.off{opacity:.14;filter:saturate(.4);pointer-events:none}
 .mx.now{border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);filter:drop-shadow(0 0 12px var(--glow))}
 
-.hl{position:absolute;left:0;right:0;background:var(--glow);border-radius:6px;pointer-events:none}
+/* 当前节次：只在该节「顶边」画一条 2px 细线。
+   以前是整节 46px 高的半透明色块，5 列拼起来像一条横贯的框框，
+   还盖在课程块上面把颜色蒙浑，把「正在上的课」的白圈高亮也罩住了。 */
+.hl{position:absolute;left:0;right:0;border-top:2px solid var(--accent);pointer-events:none}
 
 /* ---------- 图例 ---------- */
 .legend{max-width:1120px;margin:16px auto 0;display:flex;flex-wrap:wrap;gap:8px}
@@ -316,8 +319,9 @@ function markNow(){
   TIMES.forEach((t,i)=>{ if(mins>=toMin(t[0])&&mins<toMin(t[1])) p=i; });
   if(p<0) return;
   const band=document.createElement('div'); band.className='hl';
-  band.style.top=(p*ROW)+'px'; band.style.height=ROW+'px';
-  grid.querySelectorAll('.day').forEach(d=> d.appendChild(band.cloneNode()));
+  band.style.top=(p*ROW)+'px';
+  // prepend（不是 append）：压在课程块下面，免得细线/高亮互相干扰
+  grid.querySelectorAll('.day').forEach(d=> d.prepend(band.cloneNode()));
   const day=new Date().getDay();
   if(day>=1&&day<=5){
     grid.querySelectorAll(`.day[data-day="${day}"] .mx`).forEach(mx=>{
