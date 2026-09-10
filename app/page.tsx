@@ -352,23 +352,35 @@ export default function HomePage() {
     }
     play(trackIdx);
   };
-  // 打开页面自动播放：首次 play() 可能被浏览器自动播放策略拦截，
-  // 被拦后挂一次 pointerdown/touchstart 监听，用户任意点击即可开始播放。
+  // 打开页面自动播放：浏览器自动播放策略会拦截带声音的 play()，
+  // 被拦后挂 pointerdown/touchstart/keydown 监听，用户任意一次触碰即开始播放。
+  // 注意 <audio> 在 {th && ...} 里面，首帧 ti===null 时它还没挂上，
+  // 所以这段必须等 th 出现后再跑（以前在 [] 里跑，audioRef 恒为 null，等于完全没生效，
+  // 才是「必须手点一下 🎵」的真正原因）。
+  const musicKicked = useRef(false);
   useEffect(() => {
+    if (ti === null || musicKicked.current) return;
     const audio = audioRef.current;
     if (!audio) return;
+    musicKicked.current = true;
     audio.volume = volume;
+    // 用 AbortController 统一摘监听（三个监听器共享一个 signal）
+    const ac = new AbortController();
+    // 每一次手势都试一次；成功才摘监听（失败就等下一次触碰）
+    const kick = () => {
+      audio.play().then(() => {
+        setMusicOn(true);
+        ac.abort();
+      }).catch(() => {});
+    };
     audio.play().then(() => setMusicOn(true)).catch(() => {
-      const kick = () => {
-        audio.play().then(() => setMusicOn(true)).catch(() => {});
-        document.removeEventListener('pointerdown', kick);
-        document.removeEventListener('touchstart', kick);
-      };
-      document.addEventListener('pointerdown', kick, { once: true });
-      document.addEventListener('touchstart', kick, { once: true });
+      const opt = { capture: true, signal: ac.signal };
+      document.addEventListener('pointerdown', kick, opt);
+      document.addEventListener('touchstart', kick, opt);
+      document.addEventListener('keydown', kick, opt);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ti]);
   // 调整音量：同步到 audio 元件
   const changeVol = (v: number) => {
     setVolume(v);
