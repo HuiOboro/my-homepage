@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="leo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>课表 · 2026 秋季 大二上</title>
+<style>
+/* ============ 主题：Leo 珊瑚 / 日和 若草（浅色，随个人站） ============ */
+html[data-theme="leo"]{
+  --bg:#f7ece1;
+  --ink:#4d251c; --ink-soft:#8a6355;
+  --veil:linear-gradient(180deg, rgba(255,246,237,.26) 0%, rgba(255,245,236,.16) 45%, rgba(255,245,237,.22) 70%, rgba(255,246,238,.32) 100%);
+  --sheet:rgba(255,250,244,.38); --sheet-bd:rgba(214,154,124,.45);
+  --line:rgba(120,82,64,.26); --accent:#e8593d; --accent2:#a8552f;
+  --pill:linear-gradient(120deg,#ec6d51,#c1563b); --pilltxt:#fff;
+  --tag:#f2a65a; --glow:rgba(236,109,81,.28);
+}
+html[data-theme="hiyori"]{
+  --bg:#f2f6e2;
+  --ink:#3f4612; --ink-soft:#7c8a45;
+  --veil:linear-gradient(180deg, rgba(246,251,228,.28) 0%, rgba(245,250,224,.18) 45%, rgba(246,251,229,.24) 70%, rgba(247,252,231,.34) 100%);
+  --sheet:rgba(245,251,226,.42); --sheet-bd:rgba(176,200,84,.5);
+  --line:rgba(120,134,60,.24); --accent:#8a9800; --accent2:#b6d201;
+  --pill:linear-gradient(120deg,#b6d201,#869c05); --pilltxt:#fff;
+  --tag:#cbd45e; --glow:rgba(182,210,1,.30);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{--row:46px}
+html,body{color:var(--ink);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+body{
+  min-height:100vh;padding:18px 14px 40px;background:var(--bg,#f7efe2);
+}
+/* 两层固定背景：壁纸(随机) + 暗色罩，都在内容之后 */
+.wxlayer{position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:var(--wx,#0c0709) center/cover no-repeat fixed;filter:saturate(1.06)}
+.vellayer{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--veil)}
+
+/* ---------- header ---------- */
+.topbar{max-width:1120px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.home{display:inline-flex;align-items:center;gap:5px;height:34px;border:1px solid var(--sheet-bd);background:var(--sheet);color:var(--ink);border-radius:9px;text-decoration:none;padding:0 12px;font-size:13px;font-weight:700;backdrop-filter:blur(6px);white-space:nowrap}
+.home:hover{border-color:var(--accent);color:var(--accent)}
+.title h1{font-size:28px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.title .sub{margin-top:6px;font-size:13px;color:var(--ink-soft)}
+.ctl{display:flex;align-items:center;gap:8px;user-select:none;flex-wrap:wrap}
+.ctl .lbl{font-size:13px;color:var(--ink-soft)}
+.ctl button{width:32px;height:32px;border:1px solid var(--sheet-bd);background:var(--sheet);border-radius:9px;cursor:pointer;font-size:15px;line-height:1;color:var(--ink);backdrop-filter:blur(6px)}
+.ctl button:hover{border-color:var(--accent);color:var(--accent)}
+.ctl .pill{min-width:74px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--pill);color:var(--pilltxt);border-radius:9px;font-size:13px;font-weight:700;padding:0 8px}
+.ctl .all{background:var(--sheet);color:var(--ink);border:1px dashed var(--sheet-bd)}
+.themer{display:flex;align-items:center;gap:8px}
+.themer .sw{border:1px solid var(--sheet-bd);background:var(--sheet);border-radius:9px;padding:0 10px;height:32px;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;backdrop-filter:blur(6px)}
+.themer .sw:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- sheet ---------- */
+.sheet{max-width:1120px;margin:0 auto;background:var(--sheet);border:1px solid var(--sheet-bd);border-radius:14px;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);overflow-x:auto;padding:6px;backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px)}
+.grid{display:grid;grid-template-columns:86px repeat(5,minmax(154px,1fr));grid-template-rows:52px repeat(14,var(--row));min-width:880px}
+
+.corner,.day-head{font-size:14px;font-weight:700;display:flex;align-items:flex-end;justify-content:flex-start;padding:6px 8px 4px;border-bottom:2px solid var(--sheet-bd)}
+.corner{color:var(--ink-soft);font-weight:600}
+.day-head{color:var(--ink)}
+.day-head .short{font-size:12px;font-weight:500;color:var(--ink-soft);margin-left:6px}
+.grid .corner{grid-column:1;grid-row:1;border-bottom:2px solid var(--sheet-bd)}
+.grid .dh1{grid-column:2;grid-row:1}.grid .dh2{grid-column:3;grid-row:1}.grid .dh3{grid-column:4;grid-row:1}
+.grid .dh4{grid-column:5;grid-row:1}.grid .dh5{grid-column:6;grid-row:1}
+
+.gutter{grid-column:1;grid-row:2/16;position:relative;border-right:1px solid var(--sheet-bd)}
+.gutter .t{position:absolute;left:0;right:0;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.gutter .t .p{font-size:11px;font-weight:700;color:var(--ink)}
+.gutter .t .h{font-size:10px;color:var(--ink-soft)}
+.gutter .brk{position:absolute;left:0;right:0;height:1px;background:var(--sheet-bd)}
+
+.day{grid-row:2/16;position:relative;border-left:1px solid var(--sheet-bd)}
+.day-head.today{color:var(--accent)}
+.grid .d1{grid-column:2}.grid .d2{grid-column:3}.grid .d3{grid-column:4}.grid .d4{grid-column:5}.grid .d5{grid-column:6}
+
+/* blocks */
+.mx{position:absolute;border-radius:8px;padding:5px 7px;color:#fff;background:var(--c,#5a6478);overflow:hidden;display:flex;flex-direction:column}
+.mx .nm{font-size:12.5px;font-weight:700;line-height:1.25;white-space:normal;word-break:break-word}
+.mx .mt{font-size:10.5px;line-height:1.4;opacity:.94;margin-top:2px}
+.mx .mt b{font-weight:600}
+.mx.design::after{content:"";position:absolute;inset:0;border-radius:inherit;background:repeating-linear-gradient(135deg,rgba(255,255,255,.18) 0 6px,rgba(255,255,255,0) 6px 14px);pointer-events:none}
+.mx.off{opacity:.14;filter:saturate(.4);pointer-events:none}
+.mx.now{border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);filter:drop-shadow(0 0 12px var(--glow))}
+
+.hl{position:absolute;left:0;right:0;background:var(--glow);border-radius:6px;pointer-events:none}
+
+/* ---------- 图例 ---------- */
+.legend{max-width:1120px;margin:16px auto 0;display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:7px;background:var(--sheet);border:1px solid var(--sheet-bd);border-radius:999px;padding:5px 12px 5px 8px;font-size:12px;color:var(--ink);backdrop-filter:blur(6px)}
+.dot{width:11px;height:11px;border-radius:3px;flex:none}
+.chip .ds{font-size:11px;color:var(--ink-soft)}
+
+/* ---------- Q版小人（随机） ---------- */
+.chibi{position:fixed;bottom:16px;right:18px;z-index:40;pointer-events:none;filter:
+  drop-shadow(1.5px 1.5px 0 rgba(255,255,255,.92)) drop-shadow(-1.5px 1.5px 0 rgba(255,255,255,.92))
+  drop-shadow(1.5px -1.5px 0 rgba(255,255,255,.92)) drop-shadow(-1.5px -1.5px 0 rgba(255,255,255,.92))
+  drop-shadow(0 8px 16px rgba(0,0,0,.35));
+}
+.chibi img{height:min(30vh,180px);width:auto;display:block;background:transparent}
+
+@media (max-width:640px){
+  .title h1{font-size:23px}
+  .topbar{align-items:flex-start}
+  .chibi{right:10px;bottom:12px}
+  .chibi img{height:min(24vh,128px)}
+}
+
+@media print{
+  body{background:#fff;padding:0}
+  body::before,body::after{display:none}
+  .topbar .ctl,.themer,.chibi{display:none}
+  .sheet{backdrop-filter:none;background:#fff;box-shadow:none;border-radius:0;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wxlayer"></div>
+<div class="vellayer"></div>
+
+<header class="topbar">
+  <a class="home" id="homebtn" href="/" title="返回首页">‹ 返回首页</a>
+  <div class="title">
+    <h1>课表</h1>
+    <div class="sub">2026 秋季 · 大二上 · 数据科学与大数据方向</div>
+  </div>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <div class="themer">
+      <button class="sw" id="thLeo">Leo</button>
+      <button class="sw" id="thHiyori">日和</button>
+    </div>
+    <div class="ctl" id="weekctl">
+      <button id="wprev" title="上一周">‹</button>
+      <span class="pill" id="wlab">第 1 周</span>
+      <button id="wnext" title="下一周">›</button>
+      <button class="all" id="wallbtn" title="显示所有周">全部</button>
+      <button class="sw" id="reroll" title="换一张壁纸/小人">🎲</button>
+    </div>
+  </div>
+</header>
+
+<div class="sheet">
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div class="chibi" id="chibi"></div>
+
+<script>
+const ROW=46;
+const DAYS=["周一","周二","周三","周四","周五"];
+const TIMES=[["08:20","09:00"],["09:10","09:50"],["10:00","10:40"],["10:50","11:30"],
+["11:40","12:20"],["14:00","14:40"],["14:50","15:30"],["15:40","16:20"],
+["16:30","17:10"],["17:20","18:00"],["19:00","19:40"],["19:50","20:30"],
+["20:40","21:20"],["21:30","22:20"]];
+
+const COURSES=[
+ {name:"统计数据与大数据分析",teacher:"杨帆",color:"#e8583c",meets:[
+   {d:1,s:1,e:2,weeks:[[2,7]],room:"A6211"},
+   {d:2,s:2,e:5,weeks:[[2,8]],room:"A6211"},
+   {d:3,s:2,e:5,weeks:[[2,7]],room:"A6211"}]},
+ {name:"数据科学高级编程",teacher:"唐远涛",color:"#ec6d51",meets:[
+   {d:1,s:2,e:5,weeks:[[11,14]],room:"A6211"},
+   {d:2,s:6,e:9,weeks:[[11,14]],room:"A6211"},
+   {d:3,s:11,e:14,weeks:[[11,14]],room:"E5101"},
+   {d:4,s:6,e:9,weeks:[[11,14]],room:"A6211"}]},
+ {name:"当代数据管理系统",teacher:"孟源媛",color:"#e8873a",meets:[
+   {d:1,s:3,e:5,weeks:[[1,10],[15,16]],room:"A6104"},
+   {d:2,s:3,e:5,weeks:[[15,16]],room:"A6104"},
+   {d:3,s:3,e:5,weeks:[[15,16]],room:"A6104"}]},
+ {name:"计算机科学与编程1（Java）",teacher:"胡涛",color:"#c74e7c",meets:[
+   {d:1,s:6,e:9,weeks:[[9,12]],room:"A6211"},
+   {d:2,s:2,e:5,weeks:[[9,12]],room:"A6211"},
+   {d:3,s:2,e:5,weeks:[[9,12]],room:"A6211"},
+   {d:4,s:2,e:5,weeks:[[9,12]],room:"A6211"}]},
+ {name:"计算机网络",teacher:"张嘉玲",color:"#e06a4a",meets:[
+   {d:1,s:6,e:8,weeks:[[2,8]],room:"A6211"},
+   {d:4,s:2,e:5,weeks:[[2,8]],room:"A6211"}]},
+ {name:"计算机科学与编程课程设计",teacher:"胡涛",color:"#c74e7c",design:true,meets:[
+   {d:1,s:6,e:9,weeks:[[13,16]],room:"A6104"}]},
+ {name:"数据科学高级编程课程设计",teacher:"唐远涛",color:"#ec6d51",design:true,meets:[
+   {d:4,s:6,e:9,weeks:[[9,10],[15,16]],room:"A6104"}]},
+ {name:"统计数据与大数据分析课程设计",teacher:"杨帆",color:"#e8583c",design:true,meets:[
+   {d:2,s:6,e:9,weeks:[[1,1],[8,10]],room:"A6104"}]},
+ {name:"计算机网络课程设计",teacher:"张嘉玲",color:"#e06a4a",design:true,meets:[
+   {d:4,s:2,e:5,weeks:[[13,16]],room:"A6104"}]},
+ {name:"学术英语（三）",teacher:"黄载阳",color:"#d9548b",meets:[
+   {d:3,s:6,e:7,weeks:[[1,16]],room:"A6211"}]},
+ {name:"沟通与演讲",teacher:"王浩",color:"#e8784a",meets:[
+   {d:5,s:1,e:2,weeks:[[1,16]],room:"A6211"}]},
+ {name:"马克思主义基本原理",teacher:"刘汉韬",color:"#bf5a76",meets:[
+   {d:5,s:3,e:5,weeks:[[1,16]],room:"A6211"}]},
+ {name:"数学建模基础",teacher:"黄秋月",color:"#a9702f",meets:[
+   {d:4,s:11,e:12,weeks:[[1,16]],room:"E5201"}]},
+ {name:"流行音乐历史与风格",teacher:"王玺权",color:"#b0559b",meets:[
+   {d:2,s:11,e:13,weeks:[[1,11]],room:"A5202"}]},
+ {name:"体育",color:"#c0392b",meets:[
+   {d:5,s:6,e:7,weeks:[[1,16]]}]}
+];
+
+// 主题 + 素材池（本地文件夹，与 HTML 同级）
+const ASSETS='kebiao';
+const pool=(p,n)=>Array.from({length:n},(_,i)=>`${ASSETS}/${p}_${i+1}.webp`);
+const THEMES={
+  leo:{walls:pool('wall/leo',58),chibis:pool('chibi/leo',118)},
+  hiyori:{walls:pool('wall/hiyori',50),chibis:pool('chibi/hiyori',117)}
+};
+const rand=a=>a[Math.floor(Math.random()*a.length)];
+// 课程色 → 日和若草色（同一门课在不同主题下换成对应主色系）
+const HCOLOR={
+  "#e8583c":"#a9b50e","#ec6d51":"#8f9c0a","#e8873a":"#c7a41f","#c74e7c":"#97a13d",
+  "#e06a4a":"#7fae2e","#d9548b":"#b0a34b","#e8784a":"#d3b21f","#bf5a76":"#86a63e",
+  "#a9702f":"#d8e04e","#b0559b":"#8ea63c","#c0392b":"#9aae22"
+};
+const theColor=h=>(theme==='hiyori'?(HCOLOR[h]||h):h);
+
+const inWeeks=(wk,w)=>wk.some(([a,b])=>w>=a&&w<=b);
+const sumWeeks=wk=>wk.map(([a,b])=>a===b?`${a}周`:`${a}-${b}周`).join("/")+"周";
+
+function layoutDay(meets){
+  const items=meets.map(m=>({...m}));
+  items.sort((a,b)=>a.s-b.s||b.e-a.e);
+  const lanes=[]; let l;
+  items.forEach((it)=>{
+    l=lanes.findIndex(last=>last<it.s);
+    if(l<0){l=lanes.length;lanes.push(0);}
+    lanes[l]=it.e; it.lane=l;
+  });
+  items.forEach(it=>{
+    let max=0;
+    for(let p=it.s;p<=it.e;p++){
+      let c=0; items.forEach(x=>{if(x.s<=p&&x.e>=p)c++;});
+      max=Math.max(max,c);
+    }
+    it.max=max;
+  });
+  return items;
+}
+
+const grid=document.getElementById('grid');
+const chibiEl=document.getElementById('chibi');
+let curWeek=0;
+let theme=Math.random()<.5?'leo':'hiyori';
+if(location.protocol==='file:'){const h=document.getElementById('homebtn');if(h)h.style.display='none';}
+
+function setWallChibi(){
+  const t=THEMES[theme];
+  document.documentElement.style.setProperty('--wx',`url('${rand(t.walls)}')`);
+  chibiEl.innerHTML=`<img src="${rand(t.chibis)}" alt="">`;
+}
+
+function setTheme(activeOnly){
+  document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('thLeo').style.borderColor = theme==='leo' ? 'var(--accent)' : 'var(--sheet-bd)';
+  document.getElementById('thLeo').style.color = theme==='leo' ? 'var(--accent)' : 'var(--ink)';
+  document.getElementById('thHiyori').style.borderColor = theme==='hiyori' ? 'var(--accent)' : 'var(--sheet-bd)';
+  document.getElementById('thHiyori').style.color = theme==='hiyori' ? 'var(--accent)' : 'var(--ink)';
+  if(!activeOnly) setWallChibi();
+}
+
+function build(){
+  grid.innerHTML="";
+  grid.insertAdjacentHTML('beforeend',`<div class="corner">节次</div>`);
+  DAYS.forEach((d,i)=>grid.insertAdjacentHTML('beforeend',
+    `<div class="day-head dh${i+1}"><span>${d}</span><span class="short" id="short${i}"></span></div>`));
+
+  const g=document.createElement('div'); g.className='gutter';
+  TIMES.forEach((t,i)=>{
+    g.insertAdjacentHTML('beforeend',`<div class="t" style="top:${i*ROW+2}px;height:${ROW-4}px"><span class="p">第${i+1}节</span><span class="h">${t[0]}-${t[1]}</span></div>`);
+  });
+  g.insertAdjacentHTML('beforeend',`<div class="brk" style="top:${4*ROW}px"></div>`);
+  g.insertAdjacentHTML('beforeend',`<div class="brk" style="top:${9*ROW}px"></div>`);
+  grid.appendChild(g);
+
+  for(let d=1;d<=5;d++){
+    const meets=COURSES.flatMap(c=>c.meets.filter(m=>m.d===d).map(m=>({...m,color:theColor(c.color),name:c.name,teacher:c.teacher,design:c.design})));
+    const items=layoutDay(meets);
+    const day=document.createElement('div'); day.className='day d'+d; day.dataset.day=d;
+    items.forEach(it=>{
+      const weekTxt=sumWeeks(it.weeks);
+      const on=curWeek===0||inWeeks(it.weeks,curWeek);
+      day.insertAdjacentHTML('beforeend',
+       `<div class="mx${it.design?' design':''}${on?'':' off'}" style="top:${(it.s-1)*ROW+2}px;height:${(it.e-it.s+1)*ROW-4}px;left:calc(${(it.lane*100/it.max)}% + 3px);width:calc(${(100/it.max)}% - 6px);--c:${it.color}" title="${[it.name,it.teacher,weekTxt].filter(Boolean).join(' · ')}">
+         <div class="nm">${it.name}</div>
+         <div class="mt">${it.room?`<b>${it.room}</b> · `:''}${weekTxt}</div>
+        </div>`);
+    });
+    grid.appendChild(day);
+  }
+  markToday();
+  markNow();
+}
+
+function markToday(){
+  const d=new Date().getDay();
+  if(d>=1&&d<=5){
+    const head=grid.querySelector('.dh'+d);
+    if(head){ head.classList.add('today'); const sh=head.querySelector('.short'); if(sh) sh.textContent='今天'; }
+    const col=grid.querySelector('.d'+d); if(col) col.classList.add('today');
+  }
+}
+
+function markNow(){
+  const now=new Date();
+  const mins=now.getHours()*60+now.getMinutes();
+  const toMin=t=>+t.slice(0,2)*60+(+t.slice(3,5));
+  let p=-1;
+  TIMES.forEach((t,i)=>{ if(mins>=toMin(t[0])&&mins<toMin(t[1])) p=i; });
+  if(p<0) return;
+  const band=document.createElement('div'); band.className='hl';
+  band.style.top=(p*ROW)+'px'; band.style.height=ROW+'px';
+  grid.querySelectorAll('.day').forEach(d=> d.appendChild(band.cloneNode()));
+  const day=new Date().getDay();
+  if(day>=1&&day<=5){
+    grid.querySelectorAll(`.day[data-day="${day}"] .mx`).forEach(mx=>{
+      const start=Math.round((parseInt(mx.style.top)-2)/ROW)+1;
+      const len=Math.round(parseInt(mx.style.height)/ROW);
+      if(p>=start&&p<=start+len-1) mx.classList.add('now');
+    });
+  }
+}
+
+function renderLegend(){
+  const lg=document.getElementById('legend');
+  lg.innerHTML="";
+  COURSES.forEach(c=>{
+    const wk=c.meets.map(m=>sumWeeks(m.weeks)).join(" · ");
+    lg.insertAdjacentHTML('beforeend',
+      `<div class="chip"><span class="dot" style="background:${theColor(c.color)}"></span><span>${c.name}${c.design?'（课设）':''}</span><span class="ds">${[c.teacher,c.meets[0].room].filter(Boolean).join(' · ')}</span></div>`);
+  });
+  lg.insertAdjacentHTML('beforeend',`<div class="chip" style="background:transparent;border-style:dashed"><span class="ds">共 ${COURSES.length} 门 · 左右两侧色块不可并存时表示不同周次</span></div>`);
+}
+
+function drawLabel(){ document.getElementById('wlab').textContent=curWeek===0?'全部':`第 ${curWeek} 周`; }
+
+document.getElementById('wprev').onclick=()=>{ curWeek=curWeek>0?curWeek-1:0; build(); drawLabel(); };
+document.getElementById('wnext').onclick=()=>{ curWeek=curWeek===0?1:Math.min(16,curWeek+1); build(); drawLabel(); };
+document.getElementById('wallbtn').onclick=()=>{ curWeek=0; build(); drawLabel(); };
+document.getElementById('reroll').onclick=()=>{ setWallChibi(); };
+document.getElementById('thLeo').onclick=()=>{ theme='leo'; setTheme(); build(); drawLabel(); renderLegend(); };
+document.getElementById('thHiyori').onclick=()=>{ theme='hiyori'; setTheme(); build(); drawLabel(); renderLegend(); };
+
+setTheme();           // 应用初始主题色 + 随机壁纸/小人（内部会设 --wx 与小人）
+build();
+drawLabel();
+renderLegend();
+</script>
+</body>
+</html>
