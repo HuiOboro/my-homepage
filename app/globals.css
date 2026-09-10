@@ -211,7 +211,6 @@ body {
 /* 壁纸容器：宽屏(≥769px)整张铺满；双人皮肤在手机上拆成左右两半，各自对准一边的人物 */
 .hl-bgframe { position: absolute; inset: 0; }
 .hl-bgframe img.hl-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 8%; }
-.hl-bgframe img.hl-bg + img.hl-bg { display: none; } /* 桌面只显示一张 */
 .hl-hero::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(180deg, var(--fadeA) 0%, var(--fadeB) 30%, rgba(38,28,8,0) 52%,
@@ -465,29 +464,5 @@ a.hl-tile:hover .hl-go { opacity: 1; transform: translateX(0); }
   .hl-duo { grid-template-columns: 1fr; }
 }
 
-/* 手机/窄屏(≤700px)：双人皮肤背景拆成左右两半，各自对准一边的人物，
-   避免超宽拼接图在竖屏里只裁到两人中间的空当（看不到人） */
-@media (max-width: 700px) {
-  .hl-main[data-theme="leosou"] .hl-bgframe,
-  .hl-main[data-theme="junhiyo"] .hl-bgframe {
-    display: flex;
-  }
-  .hl-main[data-theme="leosou"] .hl-bgframe img.hl-bg,
-  .hl-main[data-theme="junhiyo"] .hl-bgframe img.hl-bg {
-    position: relative; inset: auto; flex: 0 0 50%; width: 50%; height: 100%;
-    object-fit: cover;
-  }
-  .hl-main[data-theme="leosou"] .hl-bgframe img.hl-bg + img.hl-bg,
-  .hl-main[data-theme="junhiyo"] .hl-bgframe img.hl-bg + img.hl-bg {
-    display: block;
-  }
-  /* 左块对准左侧人物、右块对准右侧人物（两 CP 组同构，可用同一组对位） */
-  .hl-main[data-theme="leosou"] .hl-bgframe img.hl-bg:first-child,
-  .hl-main[data-theme="junhiyo"] .hl-bgframe img.hl-bg:first-child {
-    object-position: 20% 50%;
-  }
-  .hl-main[data-theme="leosou"] .hl-bgframe img.hl-bg + img.hl-bg,
-  .hl-main[data-theme="junhiyo"] .hl-bgframe img.hl-bg + img.hl-bg {
-    object-position: 80% 50%;
-  }
-}
+/* 手机/窄屏(≤700px)：双人皮肤改由 <picture> 切到 scripts/build_cp_mobile.py
+   预生成的竖版拼图（上=左立绘 / 下=右立绘），这里不需要再拆左右两块了 */

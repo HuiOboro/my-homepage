@@ -382,6 +382,11 @@ export default function HomePage() {
   const wallList = (th ? pool?.[th.key] : null) || ([] as Wall[]);
   const wallItem = wallList.length ? wallList[wall % wallList.length] : null;
   const wallUrl = wallItem?.src ?? null;
+  // 双人皮肤：手机(≤700px)换用 scripts/build_cp_mobile.py 生成的竖版拼图
+  // （上=左立绘 / 下=右立绘）。原图是 3120x720 的横条，竖屏里 cover 只会露出中间一道，
+  // 两个人都会被裁。竖版图比率 ~0.9，正好贴合手机 hero，两个人都在且够大。
+  const wallUrlM =
+    wallUrl && th && th.chars.length > 1 ? wallUrl.replace(/\.jpg$/, '_m.jpg') : null;
   const switchTheme = () => {
     if (ti === null) return;
     const n = (ti + 1) % THEMES.length;
@@ -400,10 +405,16 @@ export default function HomePage() {
       {/* 首屏：皮肤内随机壁纸；没壁纸时用贴纸卡占位 */}
       <div className="hl-hero">
         {wallUrl ? (
-          /* 桌面整张铺满；双人皮肤在手机(≤700px)拆成左右两块，各对准一边人物 */
+          /* 桌面用原横图整张铺满；双人皮肤手机(≤700px)切到竖版拼图 */
           <div className="hl-bgframe">
-            <img className="hl-bg" src={wallUrl} alt="" />
-            <img className="hl-bg" src={wallUrl} alt="" aria-hidden="true" />
+            {wallUrlM ? (
+              <picture>
+                <source media="(max-width: 700px)" srcSet={wallUrlM} />
+                <img className="hl-bg" src={wallUrl} alt="" />
+              </picture>
+            ) : (
+              <img className="hl-bg" src={wallUrl} alt="" />
+            )}
           </div>
         ) : (
           <div className="hl-herobg" />
