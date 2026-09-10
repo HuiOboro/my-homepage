@@ -3,7 +3,7 @@
 /* 本页是刻意设计的浅色主题，强制 color-scheme: light，
    并去掉系统深色模式对 body/全局的覆盖 —— 避免手机浏览器深色模式把页面反色 */
 :root {
-  color-scheme: light;
+  color-scheme: only light;
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -17,15 +17,18 @@
 
 html {
   background: #f7f0e0; /* 兜底浅色底 */
-  color-scheme: light; /* 强化「本页是浅色」信号，抵抗手机深色模式反切 */
+  /* only light = 最强的「本页只支持浅色」信号，告诉浏览器别自作主张做夜间反色 */
+  color-scheme: only light;
 }
 
 /* 手机浏览器“深色/夜间模式”反切防御：即使系统深色，本页也保持浅色，
-   尤其首帧「朧」启动屏不能被反成黑底（夸克/vivo/迅雷等WebView常无视 meta） */
+   尤其首帧「朧」启动屏不能被反成脏绿/黑底（夸克/vivo/迅雷等WebView常无视 meta） */
 @media (prefers-color-scheme: dark) {
-  :root, html, body { color-scheme: light !important; }
-  .hl-splash { background: linear-gradient(165deg, var(--sbg1), var(--sbg2)) !important; }
-  .hl-splash .hl-soboro, .hl-splash .hl-soboro span { color: var(--sdot) !important; }
+  :root, html, body { color-scheme: only light !important; }
+  /* 实底色兜底 + 渐变，双保险：某些 WebView 会丢掉 gradient 只留 background-color */
+  .hl-splash { background-color: var(--sbg1) !important; background: linear-gradient(165deg, var(--sbg1), var(--sbg2)) !important; }
+  .hl-splash .hl-soboro { color: var(--sword) !important; }
+  .hl-splash .hl-soboro span { color: var(--sdot) !important; }
   .hl-splash .hl-wash {
     background:
       radial-gradient(120% 130% at 50% -10%, rgba(var(--a1rgb), .26), rgba(var(--a1rgb), .05) 46%, transparent 62%),
@@ -436,10 +439,10 @@ a.hl-tile:hover .hl-go { opacity: 1; transform: translateX(0); }
   font-weight: 900;
   letter-spacing: 0.3em;
   padding-right: 0.3em; /* 抵消末字字距，视觉居中 */
-  color: var(--sdot); /* 「朧」用和句号一样的主题色 */
+  color: var(--sword); /* 「朧」用每套皮肤的深色版(--sword)，对比度 ~12:1，被压暗也糊不了 */
   animation: hlGradIn 1s cubic-bezier(0.19, 1, 0.22, 1) both;
 }
-.hl-splash .hl-soboro span { color: var(--sdot); }
+.hl-splash .hl-soboro span { color: var(--sdot); } /* 句号留主题中间调，跟字形成明暗对比 */
 @keyframes hlGradIn {
   0%   { opacity: 0; transform: translateY(16px) scale(0.94); filter: blur(6px); }
   100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }

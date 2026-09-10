@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
 <title>课表 · 2026 秋季 大二上</title>
 <style>
 /* ============ 主题：Leo 珊瑚 / 日和 若草（浅色，随个人站） ============ */
@@ -25,7 +26,11 @@ html[data-theme="hiyori"]{
   --tag:#cbd45e; --glow:rgba(182,210,1,.30);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{--row:46px}
+html{--row:46px;color-scheme:light}
+/* 手机浏览器“深色/夜间模式”反切防御：本页永远是浅色，别把深底文字翻成白色 */
+@media (prefers-color-scheme: dark){
+  html{color-scheme:only light !important}
+}
 html,body{color:var(--ink);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
 body{
   min-height:100vh;padding:18px 14px 40px;background:var(--bg,#f7efe2);
@@ -41,14 +46,18 @@ body{
 .home:hover{border-color:var(--accent);color:var(--accent)}
 .title h1{font-size:28px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
 .title .sub{margin-top:6px;font-size:13px;color:var(--ink-soft)}
+/* 顶栏文字压在亮壁纸上要留白边，否则糊成一片 */
+.title h1,.title .sub{text-shadow:0 1px 3px rgba(255,255,255,.95),0 0 12px rgba(255,255,255,.7)}
 .ctl{display:flex;align-items:center;gap:8px;user-select:none;flex-wrap:wrap}
 .ctl .lbl{font-size:13px;color:var(--ink-soft)}
 .ctl button{width:32px;height:32px;border:1px solid var(--sheet-bd);background:var(--sheet);border-radius:9px;cursor:pointer;font-size:15px;line-height:1;color:var(--ink);backdrop-filter:blur(6px)}
 .ctl button:hover{border-color:var(--accent);color:var(--accent)}
 .ctl .pill{min-width:74px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--pill);color:var(--pilltxt);border-radius:9px;font-size:13px;font-weight:700;padding:0 8px}
 .ctl .all{background:var(--sheet);color:var(--ink);border:1px dashed var(--sheet-bd)}
+.ctl .all.on{background:var(--pill);color:var(--pilltxt);border:1px solid transparent}
 .themer{display:flex;align-items:center;gap:8px}
 .themer .sw{border:1px solid var(--sheet-bd);background:var(--sheet);border-radius:9px;padding:0 10px;height:32px;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;backdrop-filter:blur(6px)}
+.themer .sw.on{background:var(--pill);color:var(--pilltxt);border-color:transparent}
 .themer .sw:hover{border-color:var(--accent);color:var(--accent)}
 
 /* ---------- sheet ---------- */
@@ -216,7 +225,7 @@ const HCOLOR={
 const theColor=h=>(theme==='hiyori'?(HCOLOR[h]||h):h);
 
 const inWeeks=(wk,w)=>wk.some(([a,b])=>w>=a&&w<=b);
-const sumWeeks=wk=>wk.map(([a,b])=>a===b?`${a}周`:`${a}-${b}周`).join("/")+"周";
+const sumWeeks=wk=>wk.map(([a,b])=>a===b?`${a}周`:`${a}-${b}周`).join("/");
 
 function layoutDay(meets){
   const items=meets.map(m=>({...m}));
@@ -252,10 +261,8 @@ function setWallChibi(){
 
 function setTheme(activeOnly){
   document.documentElement.setAttribute('data-theme',theme);
-  document.getElementById('thLeo').style.borderColor = theme==='leo' ? 'var(--accent)' : 'var(--sheet-bd)';
-  document.getElementById('thLeo').style.color = theme==='leo' ? 'var(--accent)' : 'var(--ink)';
-  document.getElementById('thHiyori').style.borderColor = theme==='hiyori' ? 'var(--accent)' : 'var(--sheet-bd)';
-  document.getElementById('thHiyori').style.color = theme==='hiyori' ? 'var(--accent)' : 'var(--ink)';
+  document.getElementById('thLeo').classList.toggle('on',theme==='leo');
+  document.getElementById('thHiyori').classList.toggle('on',theme==='hiyori');
   if(!activeOnly) setWallChibi();
 }
 
@@ -332,7 +339,11 @@ function renderLegend(){
   lg.insertAdjacentHTML('beforeend',`<div class="chip" style="background:transparent;border-style:dashed"><span class="ds">共 ${COURSES.length} 门 · 左右两侧色块不可并存时表示不同周次</span></div>`);
 }
 
-function drawLabel(){ document.getElementById('wlab').textContent=curWeek===0?'全部':`第 ${curWeek} 周`; }
+function drawLabel(){
+  const all=curWeek===0;
+  document.getElementById('wlab').textContent=all?'全部周次':`第 ${curWeek} 周`;
+  document.getElementById('wallbtn').classList.toggle('on',all);
+}
 
 document.getElementById('wprev').onclick=()=>{ curWeek=curWeek>0?curWeek-1:0; build(); drawLabel(); };
 document.getElementById('wnext').onclick=()=>{ curWeek=curWeek===0?1:Math.min(16,curWeek+1); build(); drawLabel(); };

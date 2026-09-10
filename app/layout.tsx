@@ -30,10 +30,11 @@ export default function RootLayout({
     >
       <head>
         {/*
-          声明本页是浅色主题：避免夸克/vivo 等浏览器的“深色模式/夜间模式”
-          把浅色页面整页反色（启动屏变黑、背景变深、透明小人生灰底等）
+          声明本页是浅色主题：避免夸克/vivo/迅雷 等浏览器的“深色模式/夜间模式”
+          把浅色页面整页反色（启动屏变脏绿、背景变深、透明小人生灰底等）
+          only light = 明确「本页不做深色适配」，比 light 更强的退出信号
         */}
-        <meta name="color-scheme" content="light" />
+        <meta name="color-scheme" content="only light" />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
