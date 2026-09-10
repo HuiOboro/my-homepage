@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { MusicProvider } from "./music";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +37,11 @@ export default function RootLayout({
         */}
         <meta name="color-scheme" content="only light" />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* 音乐挂在这里而不是首页里：站内客户端跳转时 layout 不会卸载，
+            <audio> 一直活着，从首页点到 /blog 歌也不会断 */}
+        <MusicProvider>{children}</MusicProvider>
+      </body>
     </html>
   );
 }

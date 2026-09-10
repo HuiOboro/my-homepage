@@ -105,7 +105,11 @@ body {
    首页 · 四主题皮肤（默认 Leo 金色，data-theme 切换）
    leo レオ金 / hiyori 日和若草 / leosou レオ司绯红 / junhiyo 純日和靛蓝
    ===================================================== */
-.hl-main {
+/* 变量块：首页 .hl-main 与「全站音乐悬浮件」.hl-musicdock 共用。
+   音乐播放器挂在 layout 里（这样站内切页它不会被卸载、歌不断），
+   它不在 .hl-main 层级内，所以要把这套主题变量单独给它一份。 */
+.hl-main,
+.hl-musicdock {
   /* —— 中性层（四套基本一致）—— */
   --card: #fffdf6;
   --line: #ece0c6;
@@ -140,7 +144,8 @@ body {
   --fadeB: rgba(38, 28, 8, 0.06);
   --fadeC: rgba(247, 240, 224, 0.4);
   --herograd: linear-gradient(155deg, #e7ac09, #f7f0e0 90%);
-
+}
+.hl-main {
   font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
   color: var(--ink);
   background: var(--pg);
@@ -153,7 +158,8 @@ body {
 .hl-kai { font-family: "KaiTi", "STKaiti", "楷体", serif; }
 
 /* —— 主题覆盖 —— */
-.hl-main[data-theme="hiyori"] {
+.hl-main[data-theme="hiyori"],
+.hl-musicdock[data-theme="hiyori"] {
   --pg: #f4f6df;
   --a1: #b6d201; --a1rgb: 182, 210, 1;
   --a2: #7a8c00;
@@ -170,7 +176,8 @@ body {
   --fadeC: rgba(246, 248, 224, 0.55);
   --herograd: linear-gradient(155deg, #cfdd6b 0%, #e9f2b2 55%, #f6f8e2 100%);
 }
-.hl-main[data-theme="leosou"] {
+.hl-main[data-theme="leosou"],
+.hl-musicdock[data-theme="leosou"] {
   --pg: #f8f0e2;
   --a1: #e05745; --a1rgb: 224, 87, 69;
   --a2: #bd3a2c;
@@ -187,7 +194,8 @@ body {
   --fadeC: rgba(250, 240, 226, 0.55);
   --herograd: linear-gradient(155deg, #f2a08a 0%, #f9d9c4 55%, #f8f1e4 100%);
 }
-.hl-main[data-theme="junhiyo"] {
+.hl-main[data-theme="junhiyo"],
+.hl-musicdock[data-theme="junhiyo"] {
   --pg: #edf2f7;
   --a1: #4a8fdc; --a1rgb: 74, 143, 220;
   --a2: #2b67b8;
@@ -208,7 +216,7 @@ body {
 /* 首屏大图 */
 .hl-hero { position: relative; height: min(50vh, 400px); min-height: 300px; overflow: hidden; background: var(--pg); }
 .hl-herobg { position: absolute; inset: 0; background: var(--herograd); }
-/* 壁纸容器：宽屏(≥769px)整张铺满；双人皮肤在手机上拆成左右两半，各自对准一边的人物 */
+/* 壁纸容器：桌面用整张横图铺满；双人皮肤在手机(≤700px)由 <picture> 换成竖版拼图 */
 .hl-bgframe { position: absolute; inset: 0; }
 .hl-bgframe img.hl-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 8%; }
 .hl-hero::after {

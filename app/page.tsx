@@ -94,18 +94,8 @@ const THEMES: Theme[] = [
 // 去掉卡名里的 (CG2)/(CG1) 等档位标记，让 eyebrow 更干净
 const stripCG = (s?: string) => (s || '').replace(/\(CG\d*\)/gi, '').trim();
 
-// ===== Eden 歌单（背景音乐区，可点播、打开自动放） =====
-interface Track {
-  src: string;
-  title: string;
-  artist: string;
-  dur: string;
-}
-const TRACKS: Track[] = [
-  { src: '/music/01_ai_no_mae.mp3', title: '大いなる愛の前に全ては巡り来る', artist: 'Eden · あんさんぶるスターズ！！', dur: '3:29' },
-  { src: '/music/02_ai_no_mae_inst.mp3', title: '大いなる愛の前に全ては巡り来る (Instrumental)', artist: 'Eden · あんさんぶるスターズ！！', dur: '3:29' },
-  { src: '/music/03_bible.mp3', title: 'The Bible of The “Eden”', artist: 'Eden · あんさんぶるスターズ！！', dur: '6:00' },
-];
+// 背景音乐已搬到 app/music.tsx（挂在 layout 上，站内切页不断歌），
+// 首页这里只负责把「当前皮肤」广播出去，好让那个全局悬浮件取到主题色。
 
 // 首帧「朧」占位停留时长(ms)：让主题色淡入后再淡入主体
 const SPLASH_HOLD = 1200;
@@ -122,11 +112,6 @@ export default function HomePage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-  const [musicOn, setMusicOn] = useState(false);
-  const [trackIdx, setTrackIdx] = useState(0);
-  const [musicOpen, setMusicOpen] = useState(false);
-  const [volume, setVolume] = useState(0.8);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // 主题 + 壁纸：先读 /walls/manifest.json 拿各皮肤壁纸池，再随机皮肤、随机该皮肤内一张
   // （ti 为 null = 首帧占位，防止服务端/客户端随机不一致导致 hydration 报错）
@@ -188,6 +173,11 @@ export default function HomePage() {
     { title: '豆瓣电影 Top250', subtitle: '影视榜单筛选 · 个人练习', icon: '🎬', link: '/douban/top250.html', active: true, tag: '个人练习' },
     { title: '我的课表', subtitle: '2026 秋季大二 · Leo/日和 双主题块状课表', icon: '🗓️', link: '/timetable.html', active: true, tag: '应用' },
   ];
+
+  // 课表是 public/timetable.html（静态单页），点进去是整页跳转、React 树重建，
+  // 挂在 layout 里的 <audio> 会被销毁导致断歌。所以这张卡单独在新标签打开，
+  // 首页原封不动、歌继续放；其余站内页走软导航不卸载 layout，不用新标签。
+  const NEW_TAB = new Set(['/timetable.html']);
 
   const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || ''; // 管理员删除密码（环境变量）
 
@@ -322,72 +312,6 @@ export default function HomePage() {
     }
   };
 
-  // 背景音乐：播放指定曲目（i 为 TRACKS 索引）
-  const play = async (i: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (i !== trackIdx) {
-      setTrackIdx(i);
-      const src = TRACKS[i].src;
-      if (audio.src !== new URL(src, window.location.href).href) audio.src = src;
-    }
-    try {
-      await audio.play();
-      setMusicOn(true);
-    } catch {
-      setMusicOn(false);
-      alert('音乐文件还没放好：请把 mp3 复制到 public/music/，刷新后就能播了。');
-    }
-  };
-  // 上一首/下一首：当前曲目播完自动切下一首，末尾回到第一首
-  const next = () => play((trackIdx + 1) % TRACKS.length);
-  // 播放/暂停开关（点浮动按钮用，暂停/继续当前曲目）
-  const toggleMusic = async () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (musicOn) {
-      audio.pause();
-      setMusicOn(false);
-      return;
-    }
-    play(trackIdx);
-  };
-  // 打开页面自动播放：浏览器自动播放策略会拦截带声音的 play()，
-  // 被拦后挂 pointerdown/touchstart/keydown 监听，用户任意一次触碰即开始播放。
-  // 注意 <audio> 在 {th && ...} 里面，首帧 ti===null 时它还没挂上，
-  // 所以这段必须等 th 出现后再跑（以前在 [] 里跑，audioRef 恒为 null，等于完全没生效，
-  // 才是「必须手点一下 🎵」的真正原因）。
-  const musicKicked = useRef(false);
-  useEffect(() => {
-    if (ti === null || musicKicked.current) return;
-    const audio = audioRef.current;
-    if (!audio) return;
-    musicKicked.current = true;
-    audio.volume = volume;
-    // 用 AbortController 统一摘监听（三个监听器共享一个 signal）
-    const ac = new AbortController();
-    // 每一次手势都试一次；成功才摘监听（失败就等下一次触碰）
-    const kick = () => {
-      audio.play().then(() => {
-        setMusicOn(true);
-        ac.abort();
-      }).catch(() => {});
-    };
-    audio.play().then(() => setMusicOn(true)).catch(() => {
-      const opt = { capture: true, signal: ac.signal };
-      document.addEventListener('pointerdown', kick, opt);
-      document.addEventListener('touchstart', kick, opt);
-      document.addEventListener('keydown', kick, opt);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ti]);
-  // 调整音量：同步到 audio 元件
-  const changeVol = (v: number) => {
-    setVolume(v);
-    const audio = audioRef.current;
-    if (audio) audio.volume = v;
-  };
-
   // 首帧启动屏：随机主题还没决定（ti===null）或尚未淡出完成（!gone）前，
   // 「朧」固定在视口最上层，主题一旦定下其背景即换为该主题的配色。
   const th = ti === null ? null : THEMES[ti];
@@ -399,6 +323,17 @@ export default function HomePage() {
   // 两个人都会被裁。竖版图比率 ~0.9，正好贴合手机 hero，两个人都在且够大。
   const wallUrlM =
     wallUrl && th && th.chars.length > 1 ? wallUrl.replace(/\.jpg$/, '_m.jpg') : null;
+  // 把当前皮肤广播给全局音乐悬浮件（app/music.tsx 的 MusicDock），
+  // 它挂在 layout 里、不在 .hl-main 层级内，拿不到主题变量，只能靠这个传 key。
+  useEffect(() => {
+    if (!th) return;
+    try {
+      localStorage.setItem('hl.theme', th.key);
+    } catch {
+      /* 忽略 */
+    }
+    window.dispatchEvent(new CustomEvent('hl:theme', { detail: th.key }));
+  }, [th]);
   const switchTheme = () => {
     if (ti === null) return;
     const n = (ti + 1) % THEMES.length;
@@ -510,7 +445,16 @@ export default function HomePage() {
         <div className="hl-grid">
           {cards.map((card, index) =>
             card.active ? (
-              <Link key={index} href={card.link} className="hl-tile">
+              <Link
+                key={index}
+                href={card.link}
+                className="hl-tile"
+                {...(NEW_TAB.has(card.link)
+                  // prefetch:false —— 这链接点下去是浏览器原生整页跳转，
+                  // 不预取（否则 App Router 会去拉 *.html 的 RSC payload，白费一次请求）
+                  ? { target: '_blank', rel: 'noopener noreferrer', prefetch: false }
+                  : {})}
+              >
                 <span className="hl-tag">{card.tag}</span>
                 <div className="hl-ico">{card.icon}</div>
                 <div className="hl-t">
@@ -534,40 +478,7 @@ export default function HomePage() {
         </footer>
       </div>
 
-      {/* 背景音乐：左下角浮动按钮 + 展开面板 */}
-      <audio ref={audioRef} preload="auto" src={TRACKS[trackIdx].src} onEnded={next} />
-      <div className="hl-muswrap">
-        {musicOpen && (
-          <div className="hl-muspanel">
-            <div className="hl-mushead">
-              <div className="hl-musnow">
-                <span className="hl-muslbl">{musicOn ? '播放中' : '已暂停'}</span>
-                <b>{TRACKS[trackIdx].title}</b>
-              </div>
-              <button className="hl-musclose" onClick={() => setMusicOpen(false)} title="收起">✕</button>
-            </div>
-            <div className="hl-muslist">
-              {TRACKS.map((t, i) => (
-                <button key={i} className={`hl-track${i === trackIdx ? ' hl-trackon' : ''}`} onClick={() => play(i)}>
-                  <span className="hl-trkno">{i + 1}</span>
-                  <span className="hl-trkname">{t.title}</span>
-                  {i === trackIdx && musicOn && <span className="hl-trkply">▶</span>}
-                </button>
-              ))}
-            </div>
-            <div className="hl-musvol">
-              <label htmlFor="hlvol" title="音量">🔊</label>
-              <input id="hlvol" type="range" min={0} max={1} step={0.01}
-                value={volume} onChange={(e) => changeVol(Number(e.target.value))} />
-              <span className="hl-volpct">{Math.round(volume * 100)}%</span>
-            </div>
-          </div>
-        )}
-        <button className={`hl-mus ${musicOn ? 'playing' : ''}`} onClick={() => setMusicOpen((o) => !o)} title="背景音乐">
-          {musicOn ? '⏸ 音乐播放中' : '🎵 播放音乐'}
-          <small className="hl-mustag">{TRACKS[trackIdx].dur}</small>
-        </button>
-      </div>
+      {/* 背景音乐的悬浮按钮/面板现在由 app/music.tsx 全局渲染（站内切页不断歌） */}
 
       {/* 悬浮留言按钮 */}
       <button className="hl-fab" onClick={() => setIsCommentModalOpen(true)}>
