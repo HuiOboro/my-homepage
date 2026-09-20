@@ -156,6 +156,8 @@ body{
 
 <script>
 const ROW=46;
+const WEEK1='2026-09-14'; // 第 1 周周一
+const TERM_WEEKS=16;
 const DAYS=["周一","周二","周三","周四","周五"];
 const TIMES=[["08:20","09:00"],["09:10","09:50"],["10:00","10:40"],["10:50","11:30"],
 ["11:40","12:20"],["14:00","14:40"],["14:50","15:30"],["15:40","16:20"],
@@ -247,7 +249,9 @@ function layoutDay(meets){
 
 const grid=document.getElementById('grid');
 const chibiEl=document.getElementById('chibi');
-let curWeek=0;
+// 打开就停在当前周；学期外（假期）退回「全部」
+const wkNow=Math.floor((new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())-new Date(WEEK1+'T00:00:00'))/864e5/7)+1;
+let curWeek=(wkNow>=1&&wkNow<=TERM_WEEKS)?wkNow:0;
 let theme=Math.random()<.5?'leo':'hiyori';
 if(location.protocol==='file:'){const h=document.getElementById('homebtn');if(h)h.style.display='none';}
 
@@ -341,7 +345,7 @@ function drawLabel(){
 }
 
 document.getElementById('wprev').onclick=()=>{ curWeek=curWeek>0?curWeek-1:0; build(); drawLabel(); };
-document.getElementById('wnext').onclick=()=>{ curWeek=curWeek===0?1:Math.min(16,curWeek+1); build(); drawLabel(); };
+document.getElementById('wnext').onclick=()=>{ curWeek=curWeek===0?1:Math.min(TERM_WEEKS,curWeek+1); build(); drawLabel(); };
 document.getElementById('wallbtn').onclick=()=>{ curWeek=0; build(); drawLabel(); };
 document.getElementById('reroll').onclick=()=>{ setWallChibi(); };
 document.getElementById('thLeo').onclick=()=>{ theme='leo'; setTheme(); build(); drawLabel(); renderLegend(); };
