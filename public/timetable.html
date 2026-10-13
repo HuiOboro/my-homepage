@@ -166,9 +166,11 @@ const TIMES=[["08:20","09:00"],["09:10","09:50"],["10:00","10:40"],["10:50","11:
 
 const COURSES=[
  {name:"统计数据与大数据分析",teacher:"杨帆",color:"#e8583c",meets:[
-   {d:1,s:1,e:2,weeks:[[2,7]],room:"A6211"},
-   {d:2,s:2,e:5,weeks:[[2,8]],room:"A6211"},
-   {d:3,s:2,e:5,weeks:[[2,7]],room:"A6211"}]},
+   {d:1,s:1,e:2,weeks:[[2,3],[5,7]],room:"A6211"},
+   {d:1,s:1,e:2,weeks:[[4,4]],room:"A6211"},
+   {d:2,s:2,e:5,weeks:[[2,3],[5,8]],room:"A6211"},
+   {d:2,s:2,e:5,weeks:[[4,4]],room:"A6211"},
+   {d:3,s:2,e:5,weeks:[[2,3],[5,8]],room:"A6211"}]},
  {name:"数据科学高级编程",teacher:"唐远涛",color:"#ec6d51",meets:[
    {d:1,s:2,e:5,weeks:[[11,14]],room:"A6211"},
    {d:2,s:6,e:9,weeks:[[11,14]],room:"A6211"},
@@ -184,8 +186,10 @@ const COURSES=[
    {d:3,s:2,e:5,weeks:[[9,12]],room:"A6211"},
    {d:4,s:2,e:5,weeks:[[9,12]],room:"A6211"}]},
  {name:"计算机网络",teacher:"张嘉玲",color:"#e06a4a",meets:[
-   {d:1,s:6,e:8,weeks:[[2,8]],room:"A6211"},
-   {d:4,s:2,e:5,weeks:[[2,8]],room:"A6211"}]},
+   {d:1,s:6,e:9,weeks:[[2,2]],room:"A6211"},
+   {d:1,s:6,e:9,weeks:[[3,3],[5,7]],room:"A6211"},
+   {d:1,s:6,e:10,weeks:[[8,8]],room:"A6211"},
+   {d:4,s:2,e:5,weeks:[[2,3],[5,8]],room:"A6211"}]},
  {name:"计算机科学与编程课程设计",teacher:"胡涛",color:"#c74e7c",design:true,meets:[
    {d:1,s:6,e:9,weeks:[[13,16]],room:"A6104"}]},
  {name:"数据科学高级编程课程设计",teacher:"唐远涛",color:"#ec6d51",design:true,meets:[
@@ -194,8 +198,10 @@ const COURSES=[
    {d:2,s:6,e:9,weeks:[[1,1],[8,10]],room:"A6104"}]},
  {name:"计算机网络课程设计",teacher:"张嘉玲",color:"#e06a4a",design:true,meets:[
    {d:4,s:2,e:5,weeks:[[13,16]],room:"A6104"}]},
- {name:"学术英语（三）",teacher:"黄载阳",color:"#d9548b",meets:[
+ {name:"雅思（IELTS）",teacher:"黄载阳",color:"#d9548b",meets:[
    {d:3,s:6,e:7,weeks:[[1,16]],room:"A6211"}]},
+ {name:"形势与政策（三）",teacher:"吴君灿",color:"#7c8fa6",meets:[
+   {d:3,s:8,e:9,weeks:[[9,12]],room:"A6318"}]},
  {name:"沟通与演讲",teacher:"王浩",color:"#e8784a",meets:[
    {d:5,s:1,e:2,weeks:[[1,16]],room:"A6211"}]},
  {name:"马克思主义基本原理",teacher:"刘汉韬",color:"#bf5a76",meets:[
@@ -204,7 +210,7 @@ const COURSES=[
    {d:4,s:11,e:12,weeks:[[1,16]],room:"E5201"}]},
  {name:"流行音乐历史与风格",teacher:"王玺权",color:"#b0559b",meets:[
    {d:2,s:11,e:13,weeks:[[1,11]],room:"A5202"}]},
- {name:"体育",color:"#c0392b",meets:[
+ {name:"体育与健康（一）",teacher:"肖崇怡",color:"#c0392b",meets:[
    {d:5,s:6,e:7,weeks:[[1,16]]}]}
 ];
 
@@ -220,7 +226,8 @@ const rand=a=>a[Math.floor(Math.random()*a.length)];
 const HCOLOR={
   "#e8583c":"#a9b50e","#ec6d51":"#8f9c0a","#e8873a":"#c7a41f","#c74e7c":"#97a13d",
   "#e06a4a":"#7fae2e","#d9548b":"#b0a34b","#e8784a":"#d3b21f","#bf5a76":"#86a63e",
-  "#a9702f":"#d8e04e","#b0559b":"#8ea63c","#c0392b":"#9aae22"
+  "#a9702f":"#d8e04e","#b0559b":"#8ea63c","#c0392b":"#9aae22",
+  "#7c8fa6":"#8ea63c"
 };
 const theColor=h=>(theme==='hiyori'?(HCOLOR[h]||h):h);
 
